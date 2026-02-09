@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         FUT UT View Debug Overlay (DOM-aware)
-// @namespace    your.namespace.here
+// @namespace    https://github.com/tomolom/fut-debug-overlay
 // @version      0.8
 // @description  Inspect UT* views, controllers, viewmodels & DOM with UT-created-by info
 // @match        https://www.ea.com/*
