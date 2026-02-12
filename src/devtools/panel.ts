@@ -81,8 +81,25 @@ const tabContents = {
   snapshots: document.getElementById('snapshots-content')!,
 };
 
+// --- Default feature states (shown immediately before bridge responds) ---
+const DEFAULT_FEATURES: Record<string, boolean> = {
+  overlay: true,
+  sidebar: true,
+  classinspector: true,
+  methodspy: true,
+  network: false,
+  conditionallog: false,
+  perfprofiler: false,
+  navtimeline: false,
+  propertywatcher: false,
+};
+
 // --- Initialization ---
 function init() {
+  // Render toggles immediately with defaults so they're visible before bridge connects
+  state.features = { ...DEFAULT_FEATURES };
+  renderToggles();
+
   setupTabs();
   setupFilters();
   setupSorting();
@@ -155,38 +172,53 @@ function connectToBackground() {
 
 function handleMessage(msg: any) {
   switch (msg.type) {
-    case 'METHOD_CALL_BATCH':
-      state.methodSpy.data = [...msg.payload, ...state.methodSpy.data].slice(
+    // METHOD_CALL: payload is an array of calls (batched)
+    case 'METHOD_CALL': {
+      const calls = Array.isArray(msg.payload) ? msg.payload : [msg.payload];
+      state.methodSpy.data = [...calls, ...state.methodSpy.data].slice(
         0,
         10000,
       );
       updatePending = true;
       break;
-    case 'NETWORK_REQUEST':
+    }
+    // NETWORK_EVENT: single network request record
+    case 'NETWORK_EVENT':
       state.network.data.unshift(msg.payload);
+      if (state.network.data.length > 5000) state.network.data.length = 5000;
       updatePending = true;
       break;
-    case 'PERF_STATS':
-      state.performance.data = msg.payload;
+    // PERF_DATA: full stats snapshot (array of PerfRecord)
+    case 'PERF_DATA':
+      state.performance.data = Array.isArray(msg.payload) ? msg.payload : [];
       updatePending = true;
       break;
+    // NAV_EVENT: single navigation event
     case 'NAV_EVENT':
       state.navigation.data.unshift(msg.payload);
+      if (state.navigation.data.length > 500)
+        state.navigation.data.length = 500;
       updatePending = true;
       break;
-    case 'SNAPSHOT_ADDED':
-      state.snapshots.data.push({
-        id: state.snapshots.data.length + 1,
-        timestamp: msg.payload.timestamp,
-        classCount: msg.payload.classes.length,
-        version: msg.payload.version,
-        classes: msg.payload.classes,
-      });
-      updatePending = true;
+    // SNAPSHOT_DATA: snapshot was taken
+    case 'SNAPSHOT_DATA':
+      if (msg.payload && msg.payload.classes) {
+        state.snapshots.data.push({
+          id: state.snapshots.data.length + 1,
+          timestamp: msg.payload.timestamp,
+          classCount: msg.payload.classes.length,
+          version: msg.payload.version,
+          classes: msg.payload.classes.map((c: any) => c.name || c),
+        });
+        updatePending = true;
+      }
       break;
+    // FEATURE_STATES: current toggle states
     case 'FEATURE_STATES':
-      state.features = msg.payload;
-      renderToggles();
+      if (msg.payload && typeof msg.payload === 'object') {
+        state.features = msg.payload;
+        renderToggles();
+      }
       break;
   }
 }

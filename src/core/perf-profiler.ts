@@ -5,6 +5,7 @@
 
 import { dispatcher } from './hook-dispatcher';
 import { isFeatureEnabled } from './feature-toggles';
+import { sendMessage, MessageType } from './message-bridge';
 
 export interface MethodStats {
   className: string;
@@ -127,6 +128,12 @@ export function resetStats(): void {
     dispatcher.off('method:call', profilerCallback);
   }
 
+  // Clear bridge flush timer
+  if (perfBridgeTimer !== null) {
+    clearInterval(perfBridgeTimer);
+    perfBridgeTimer = null;
+  }
+
   profilerInitialized = false;
   profilerCallback = null;
 }
@@ -135,6 +142,29 @@ export function resetStats(): void {
  * Initialize the performance profiler
  * Subscribes to method:call events from the hook dispatcher
  */
+/** Periodically send perf stats snapshot to DevTools panel via message bridge */
+const PERF_BRIDGE_INTERVAL_MS = 2000;
+let perfBridgeTimer: ReturnType<typeof setInterval> | null = null;
+
+function flushPerfStatsBridge(): void {
+  if (!isFeatureEnabled('perfprofiler')) return;
+  if (stats.size === 0) return;
+
+  // Build a lightweight snapshot (exclude raw timings array to save bandwidth)
+  const snapshot = Array.from(stats.values()).map((s) => ({
+    className: s.className,
+    methodName: s.methodName,
+    callCount: s.callCount,
+    totalMs: s.totalMs,
+    avgMs: s.avgMs,
+    minMs: s.minMs,
+    maxMs: s.maxMs,
+    p95Ms: s.p95Ms,
+  }));
+
+  sendMessage(MessageType.PERF_DATA, snapshot);
+}
+
 export function initPerfProfiler(): void {
   // Prevent duplicate listeners
   if (profilerInitialized) return;
@@ -156,4 +186,7 @@ export function initPerfProfiler(): void {
   };
 
   dispatcher.on('method:call', profilerCallback);
+
+  // Start periodic bridge flush for DevTools panel
+  perfBridgeTimer = setInterval(flushPerfStatsBridge, PERF_BRIDGE_INTERVAL_MS);
 }

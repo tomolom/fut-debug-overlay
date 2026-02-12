@@ -18,6 +18,8 @@ import {
 } from './state';
 import { dispatcher } from './hook-dispatcher';
 import { originals } from './originals';
+import { sendMessage, MessageType } from './message-bridge';
+import { isFeatureEnabled } from './feature-toggles';
 
 const w = window as any;
 const MAX_CONTROLLERS = 1000;
@@ -210,6 +212,19 @@ export function rescanUTClasses(): void {
   }
 }
 
+/** Pending method calls waiting to be flushed to the DevTools panel bridge */
+const bridgeMethodCallBuffer: any[] = [];
+const BRIDGE_METHOD_FLUSH_MS = 500;
+const BRIDGE_METHOD_MAX_BATCH = 200;
+
+/** Periodically flush batched method calls to the DevTools panel via message bridge */
+function flushMethodCallBridge(): void {
+  if (bridgeMethodCallBuffer.length === 0) return;
+  const batch = bridgeMethodCallBuffer.splice(0, BRIDGE_METHOD_MAX_BATCH);
+  sendMessage(MessageType.METHOD_CALL, batch);
+}
+setInterval(flushMethodCallBridge, BRIDGE_METHOD_FLUSH_MS);
+
 export function recordMethodCall(
   className: string,
   methodName: string,
@@ -219,8 +234,10 @@ export function recordMethodCall(
   threw: boolean,
   errorObj: any,
 ): void {
-  // 🚀 If the Method Spy isn't visible, do NOTHING.
-  if (!isMethodSpyVisible()) return;
+  // Gate: need either in-page spy visible OR methodspy feature enabled (for DevTools panel)
+  const spyVisible = isMethodSpyVisible();
+  const featureOn = isFeatureEnabled('methodspy');
+  if (!spyVisible && !featureOn) return;
 
   const ts = Date.now();
 
@@ -255,9 +272,19 @@ export function recordMethodCall(
     threw,
   };
 
-  UTDebugRegistry.methodCalls.push(call);
+  // Local ring buffer recording (only when in-page spy window is open)
+  if (spyVisible) {
+    UTDebugRegistry.methodCalls.push(call);
+    setMethodSpyNeedsRefresh(true);
+  }
 
-  setMethodSpyNeedsRefresh(true);
+  // Send to DevTools panel via bridge (batched)
+  if (featureOn) {
+    if (bridgeMethodCallBuffer.length < BRIDGE_METHOD_MAX_BATCH * 2) {
+      bridgeMethodCallBuffer.push(call);
+    }
+    // Drop silently if buffer is full to prevent memory pressure
+  }
 }
 
 export function registerClassInfo(name: string): void {
@@ -293,7 +320,7 @@ export function registerClassInfo(name: string): void {
         const storedOriginal = originals.get<any>(protoKey) || originalMethod;
 
         const wrapped = function (this: any) {
-          if (!isMethodSpyVisible())
+          if (!isMethodSpyVisible() && !isFeatureEnabled('methodspy'))
             return storedOriginal.apply(this, arguments);
 
           const startTime = performance.now();
@@ -369,7 +396,7 @@ export function registerClassInfo(name: string): void {
         const storedOriginal = originals.get<any>(staticKey) || originalMethod;
 
         const wrappedStatic = function (this: any) {
-          if (!isMethodSpyVisible())
+          if (!isMethodSpyVisible() && !isFeatureEnabled('methodspy'))
             return storedOriginal.apply(this, arguments);
 
           const startTime = performance.now();

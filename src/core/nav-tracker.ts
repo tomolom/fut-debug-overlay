@@ -7,6 +7,7 @@
 import { originals } from './originals';
 import { registry } from './registry';
 import { isFeatureEnabled } from './feature-toggles';
+import { sendMessage, MessageType } from './message-bridge';
 
 /**
  * Navigation event types
@@ -93,6 +94,9 @@ export function recordNavEvent(
   if (navEvents.length > MAX_NAV_EVENTS) {
     navEvents.shift(); // Remove oldest
   }
+
+  // Send to DevTools panel via bridge (low volume, send immediately)
+  sendMessage(MessageType.NAV_EVENT, event);
 }
 
 /**
