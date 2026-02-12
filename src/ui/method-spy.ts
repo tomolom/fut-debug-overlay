@@ -20,6 +20,7 @@ import {
 import { registry } from '../core/registry';
 import { escapeHtml } from '../core/helpers';
 import { setupClassWindowDragging } from './drag';
+import { getShadowRoot } from './shadow-host';
 
 /**
  * Create Method Spy window
@@ -71,7 +72,7 @@ export function createMethodSpyWindow(): void {
 
   methodSpyWindowEl.appendChild(header);
   methodSpyWindowEl.appendChild(body);
-  document.body.appendChild(methodSpyWindowEl);
+  getShadowRoot().appendChild(methodSpyWindowEl);
 
   setMethodSpyWindowEl(methodSpyWindowEl);
   setMethodSpyListEl(methodSpyListEl);

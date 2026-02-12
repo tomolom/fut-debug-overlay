@@ -15,6 +15,7 @@ import {
 import { registry } from '../core/registry';
 import { pruneViewRegistry, escapeHtml } from '../core/helpers';
 import { flashViewRecord } from './overlay';
+import { getShadowRoot } from './shadow-host';
 
 /**
  * Create sidebar panel with filter input
@@ -37,7 +38,7 @@ export function createSidebar(): void {
 
   sidebarEl.appendChild(sidebarFilterInput);
   sidebarEl.appendChild(sidebarContentEl);
-  document.body.appendChild(sidebarEl);
+  getShadowRoot().appendChild(sidebarEl);
 
   setSidebarEl(sidebarEl);
   setSidebarContentEl(sidebarContentEl);

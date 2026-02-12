@@ -195,6 +195,9 @@ export function activateDomHook(): void {
   const mo = new MutationObserver((mutations) => {
     if (!isDebugEnabled()) return;
     for (const m of mutations) {
+      // Skip mutations inside shadow host entirely
+      if (isInsideDebugShadowHost(m.target)) continue;
+
       for (let i = 0; i < m.addedNodes.length; i++) {
         const node = m.addedNodes[i];
         if (!(node instanceof Element)) continue;

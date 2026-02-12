@@ -27,6 +27,7 @@ import {
 } from '../core/helpers';
 import { updateSidebar } from './sidebar';
 import { rescanUTClasses } from '../core/ut-class-hooks';
+import { getShadowRoot } from './shadow-host';
 
 // Cache last target to avoid re-computing tooltip data when mouse moves within same element
 let lastTarget: Element | null = null;
@@ -49,9 +50,10 @@ export function createOverlayElements(): void {
   badgeEl.className = 'ut-debug-badge';
   badgeEl.style.display = 'none';
 
-  document.body.appendChild(tooltipEl);
-  document.body.appendChild(highlightEl);
-  document.body.appendChild(badgeEl);
+  const shadowRoot = getShadowRoot();
+  shadowRoot.appendChild(tooltipEl);
+  shadowRoot.appendChild(highlightEl);
+  shadowRoot.appendChild(badgeEl);
 
   setTooltipEl(tooltipEl);
   setHighlightEl(highlightEl);

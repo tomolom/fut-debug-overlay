@@ -1,11 +1,11 @@
 // Entry point for FUT UT View Debug Overlay Chrome Extension
-import './styles/overlay.css';
 import './core/message-bridge';
 
 // Import all modules
 import { activateDomHook } from './core/dom-hooks';
 import { hookAllUTClasses } from './core/ut-class-hooks';
 import { initEventHooks } from './core/event-hooks';
+import { createShadowHost } from './ui/shadow-host';
 import {
   createOverlayElements,
   updateOverlayForEvent,
@@ -28,6 +28,9 @@ import { isMethodSpyVisible } from './core/state';
  * Sets up the debug overlay UI and event listeners
  */
 function setupDebugOverlay(): void {
+  // Create shadow DOM host FIRST - all UI elements will be appended here
+  createShadowHost();
+
   createOverlayElements();
   createSidebar();
   attachSidebarClickHandler();

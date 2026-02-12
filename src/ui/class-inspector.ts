@@ -20,6 +20,7 @@ import {
 import { registry } from '../core/registry';
 import { escapeHtml } from '../core/helpers';
 import { setupClassWindowDragging } from './drag';
+import { getShadowRoot } from './shadow-host';
 
 /**
  * Create Class Inspector window
@@ -72,7 +73,7 @@ export function createClassWindow(): void {
 
   classWindowEl.appendChild(header);
   classWindowEl.appendChild(body);
-  document.body.appendChild(classWindowEl);
+  getShadowRoot().appendChild(classWindowEl);
 
   setClassWindowEl(classWindowEl);
   setClassWindowClassListEl(classWindowClassListEl);
@@ -105,7 +106,12 @@ export function renderClassList(): void {
   if (!classWindowClassListEl) return;
 
   const classWindowFilterInput = getClassWindowFilterInput();
-  const filter = (classWindowFilterInput && classWindowFilterInput.value || '').toLowerCase().trim();
+  const filter = (
+    (classWindowFilterInput && classWindowFilterInput.value) ||
+    ''
+  )
+    .toLowerCase()
+    .trim();
   const entries = Array.from(registry.classes.keys()).sort();
 
   let html = '';
@@ -114,10 +120,9 @@ export function renderClassList(): void {
     if (filter && !name.toLowerCase().includes(filter)) continue;
 
     const selected = name === getSelectedClassName();
-    html +=
-      `<div class="ut-debug-class-row${selected ? ' ut-debug-class-row-selected' : ''}" data-class="${name}">${ 
-      name 
-      }</div>`;
+    html += `<div class="ut-debug-class-row${selected ? ' ut-debug-class-row-selected' : ''}" data-class="${name}">${
+      name
+    }</div>`;
   }
 
   classWindowClassListEl.innerHTML = html;
@@ -144,7 +149,9 @@ export function renderClassList(): void {
 
   // If no selection yet but there are entries, select the first visible one
   if (!getSelectedClassName()) {
-    const firstRow = classWindowClassListEl.querySelector('.ut-debug-class-row');
+    const firstRow = classWindowClassListEl.querySelector(
+      '.ut-debug-class-row',
+    );
     if (firstRow) {
       const firstClassName = firstRow.getAttribute('data-class');
       if (firstClassName) {
@@ -173,17 +180,20 @@ export function renderMethodList(className: string): void {
   html += `<div><strong>${escapeHtml(className)}</strong></div>`;
 
   if (info.protoMethods.length) {
-    html += '<div class="ut-debug-method-section-title">Prototype methods</div>';
+    html +=
+      '<div class="ut-debug-method-section-title">Prototype methods</div>';
     for (let i = 0; i < info.protoMethods.length; i += 1) {
       html += `<div class="ut-debug-method-name">• ${escapeHtml(info.protoMethods[i])}</div>`;
     }
   } else {
-    html += '<div class="ut-debug-method-section-title">Prototype methods</div>';
+    html +=
+      '<div class="ut-debug-method-section-title">Prototype methods</div>';
     html += '<div class="ut-debug-method-name">(none)</div>';
   }
 
   if (info.staticMethods.length) {
-    html += '<div class="ut-debug-method-section-title" style="margin-top:4px;">Static methods</div>';
+    html +=
+      '<div class="ut-debug-method-section-title" style="margin-top:4px;">Static methods</div>';
     for (let i = 0; i < info.staticMethods.length; i += 1) {
       html += `<div class="ut-debug-method-name">• ${escapeHtml(info.staticMethods[i])}</div>`;
     }
@@ -206,7 +216,8 @@ export function toggleClassWindow(): void {
   }
 
   if (classWindowEl) {
-    classWindowEl.style.display = newVisible && isDebugEnabled() ? 'block' : 'none';
+    classWindowEl.style.display =
+      newVisible && isDebugEnabled() ? 'block' : 'none';
   }
 
   if (newVisible) {
