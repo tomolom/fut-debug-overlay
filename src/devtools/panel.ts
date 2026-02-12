@@ -33,6 +33,7 @@ interface SnapshotRecord {
 // --- State ---
 const state = {
   activeTab: 'methodspy',
+  features: {} as Record<string, boolean>,
   methodSpy: {
     data: [] as MethodCall[],
     filter: '',
@@ -66,6 +67,10 @@ let port: chrome.runtime.Port | null = null;
 const BATCH_UPDATE_MS = 500;
 let updatePending = false;
 
+// Read tabId from URL query param (passed by devtools.ts)
+const urlParams = new URLSearchParams(window.location.search);
+const tabId = urlParams.get('tabId') || '0';
+
 // --- DOM Elements ---
 const tabsHeader = document.getElementById('tabs-header')!;
 const tabContents = {
@@ -90,7 +95,7 @@ function init() {
 
 function connectToBackground() {
   try {
-    port = chrome.runtime.connect({ name: 'devtools-panel' });
+    port = chrome.runtime.connect({ name: `fut-debug-devtools:${tabId}` });
 
     port.onMessage.addListener((msg) => {
       handleMessage(msg);
@@ -104,6 +109,7 @@ function connectToBackground() {
 
     // Request initial state
     port.postMessage({ type: 'GET_INITIAL_STATE' });
+    port.postMessage({ type: 'GET_FEATURE_STATES' });
   } catch (e) {
     console.error('Connection failed:', e);
   }
@@ -139,6 +145,10 @@ function handleMessage(msg: any) {
         classes: msg.payload.classes,
       });
       updatePending = true;
+      break;
+    case 'FEATURE_STATES':
+      state.features = msg.payload;
+      renderToggles();
       break;
   }
 }
@@ -273,6 +283,47 @@ function renderActiveTab() {
       renderSnapshots();
       break;
   }
+}
+
+// --- Rendering: Toggles ---
+function renderToggles() {
+  const container = document.getElementById('toggles-bar')!;
+  const features = [
+    { key: 'overlay', label: 'Overlay' },
+    { key: 'sidebar', label: 'Sidebar' },
+    { key: 'classinspector', label: 'Class Insp' },
+    { key: 'methodspy', label: 'Method Spy' },
+    { key: 'network', label: 'Network' },
+    { key: 'conditionallog', label: 'Cond Log' },
+    { key: 'perfprofiler', label: 'Perf' },
+    { key: 'navtimeline', label: 'Nav' },
+    { key: 'propertywatcher', label: 'Prop Watch' },
+  ];
+
+  container.innerHTML = features
+    .map((f) => {
+      const active = state.features[f.key];
+      return `
+      <div class="toggle-item ${active ? 'active' : ''}" data-key="${f.key}">
+        <div class="toggle-switch"></div>
+        <span>${f.label}</span>
+      </div>
+    `;
+    })
+    .join('');
+
+  container.querySelectorAll('.toggle-item').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      const target = e.currentTarget as HTMLElement;
+      const key = target.getAttribute('data-key');
+      if (key && port) {
+        // Optimistic update
+        state.features[key] = !state.features[key];
+        renderToggles();
+        port.postMessage({ type: 'TOGGLE_FEATURE', payload: { feature: key } });
+      }
+    });
+  });
 }
 
 // --- Rendering: Method Spy ---

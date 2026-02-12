@@ -1,5 +1,5 @@
 // Entry point for FUT UT View Debug Overlay Chrome Extension
-import './core/message-bridge';
+import { onMessage, sendMessage, MessageType } from './core/message-bridge';
 
 // Import all modules
 import { activateDomHook } from './core/dom-hooks';
@@ -29,7 +29,7 @@ import {
   updateMethodSpyList,
 } from './ui/method-spy';
 import { isMethodSpyVisible } from './core/state';
-import { toggleFeature } from './core/feature-toggles';
+import { toggleFeature, getFeatures, FeatureKey } from './core/feature-toggles';
 
 /**
  * Sets up the debug overlay UI and event listeners
@@ -118,6 +118,19 @@ function init(): void {
   initPropertyWatcher(); // Property watcher for object change tracking
   initNetworkInterceptor(); // Network/API monitor (fetch + XHR)
   installFUTDBG(); // Install window.FUTDBG console API
+
+  // Setup DevTools message listeners
+  onMessage(MessageType.TOGGLE_FEATURE, (payload: any) => {
+    if (payload && payload.feature) {
+      toggleFeature(payload.feature as FeatureKey);
+      sendMessage(MessageType.FEATURE_STATES, getFeatures());
+    }
+  });
+
+  onMessage(MessageType.GET_FEATURE_STATES, () => {
+    sendMessage(MessageType.FEATURE_STATES, getFeatures());
+  });
+
   setupDebugOverlay(); // UI setup
   console.log('[UTDebug] Ready. Press Ctrl+Shift+U to toggle.');
 }
