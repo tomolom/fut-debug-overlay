@@ -18,6 +18,8 @@ import {
 } from './state';
 
 const w = window as any;
+const MAX_CONTROLLERS = 1000;
+const MAX_VIEW_MODELS = 1000;
 
 export function wrapCtorForDebug(name: string): void {
   const Original = w[name];
@@ -29,8 +31,16 @@ export function wrapCtorForDebug(name: string): void {
     const entry = { className: name, instance, createdAt: Date.now() };
     if (/ViewController$/.test(name)) {
       UTDebugRegistry.controllers.push(entry);
+      if (UTDebugRegistry.controllers.length > MAX_CONTROLLERS) {
+        UTDebugRegistry.controllers =
+          UTDebugRegistry.controllers.slice(-MAX_CONTROLLERS);
+      }
     } else if (/ViewModel$/.test(name)) {
       UTDebugRegistry.viewModels.push(entry);
+      if (UTDebugRegistry.viewModels.length > MAX_VIEW_MODELS) {
+        UTDebugRegistry.viewModels =
+          UTDebugRegistry.viewModels.slice(-MAX_VIEW_MODELS);
+      }
     }
     return instance;
   }
@@ -92,6 +102,26 @@ export function hookAllUTClasses(): void {
     count++;
   }
   console.log('[UTDebug] Processed UT classes:', count);
+}
+
+export function rescanUTClasses(): void {
+  const keys = Object.keys(w).filter((k) => /^UT[A-Z].+/.test(k));
+  let newCount = 0;
+  for (let i = 0; i < keys.length; i++) {
+    const k = keys[i];
+    // Only process if not already in registry
+    if (!UTDebugRegistry.classes.has(k)) {
+      registerClassInfo(k);
+      hookUTClass(k);
+      if (/ViewController$/.test(k) || /ViewModel$/.test(k)) {
+        wrapCtorForDebug(k);
+      }
+      newCount++;
+    }
+  }
+  if (newCount > 0) {
+    console.log('[UTDebug] Rescanned and found new UT classes:', newCount);
+  }
 }
 
 export function recordMethodCall(
@@ -170,6 +200,8 @@ export function registerClassInfo(name: string): void {
       // wrap for spying (only once)
       if (!original.__utSpyWrapped) {
         const wrapped = function (this: any) {
+          if (!isMethodSpyVisible()) return original.apply(this, arguments);
+
           let result;
 
           try {
@@ -216,6 +248,8 @@ export function registerClassInfo(name: string): void {
 
       if (!original.__utSpyWrapped) {
         const wrappedStatic = function (this: any) {
+          if (!isMethodSpyVisible()) return original.apply(this, arguments);
+
           let result;
 
           try {

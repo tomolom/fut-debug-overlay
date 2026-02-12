@@ -236,6 +236,7 @@ export function toggleDebug(): void {
     if (classWindowEl) classWindowEl.style.display = 'none';
     if (methodSpyWindowEl) methodSpyWindowEl.style.display = 'none';
   } else {
+    rescanUTClasses();
     if (sidebarEl) sidebarEl.style.display = '';
     if (isClassWindowVisible() && classWindowEl)
       classWindowEl.style.display = 'block';
