@@ -6,6 +6,12 @@
 
 import { registry } from '../core/registry';
 import type { ClassInfo, MethodCall, ViewRecord } from '../types';
+import {
+  addRule as addRuleEngine,
+  removeRule as removeRuleEngine,
+  getRules as getRulesEngine,
+} from '../core/rules-engine';
+import type { Rule } from '../core/rules-engine';
 
 /**
  * Summary of a view without live DOM references
@@ -82,6 +88,23 @@ interface FUTDBG {
    * Access raw registry for power users
    */
   readonly registry: typeof registry;
+
+  /**
+   * Add a conditional logging rule
+   * Returns rule ID
+   */
+  addRule(rule: Omit<Rule, 'id'>): string;
+
+  /**
+   * Remove a rule by ID
+   * Returns true if removed, false if not found
+   */
+  removeRule(id: string): boolean;
+
+  /**
+   * Get all active rules
+   */
+  rules(): Rule[];
 
   /**
    * Print help text describing all available commands
@@ -187,12 +210,27 @@ function createFUTDBG(): FUTDBG {
       return registry;
     },
 
+    addRule(rule: Omit<Rule, 'id'>): string {
+      return addRuleEngine(rule);
+    },
+
+    removeRule(id: string): boolean {
+      return removeRuleEngine(id);
+    },
+
+    rules(): Rule[] {
+      return getRulesEngine();
+    },
+
     help(): string {
       return `FUT Debug Console API:
 - FUTDBG.classes() - List all registered UT* class names (sorted)
 - FUTDBG.find(className) - Get class info (constructor, methods) or null
 - FUTDBG.views() - List all tracked DOM views with summaries
 - FUTDBG.calls(filter?) - Get method calls (newest first, max 100, optional filter)
+- FUTDBG.addRule(rule) - Add conditional logging rule (max 20), returns rule ID
+- FUTDBG.removeRule(id) - Remove rule by ID, returns true if removed
+- FUTDBG.rules() - Get all active rules
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -202,6 +240,10 @@ Examples:
   FUTDBG.views()                      // [{ element, classes, createdBy, ... }, ...]
   FUTDBG.calls()                      // [{ id, ts, className, methodName, ... }, ...]
   FUTDBG.calls('PlayerItem.render')   // Filter by substring
+  FUTDBG.addRule({ className: 'UT*View', action: 'log' })  // Add rule with glob
+  FUTDBG.addRule({ methodName: 'render*', action: 'debugger' })  // Debugger on render*
+  FUTDBG.rules()                      // [{ id, className, methodName, action, ... }, ...]
+  FUTDBG.removeRule('rule-123')       // Remove rule by ID
   FUTDBG.registry.classes             // Direct access to registry`;
     },
   };
