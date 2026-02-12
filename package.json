@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/tomolom/fut-debug-overlay#readme",
   "devDependencies": {
+    "@types/chrome": "^0.1.36",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^8.57.1",

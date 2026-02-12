@@ -37,6 +37,16 @@ import {
 } from '../core/property-watcher';
 import { inspectInstance } from '../ui/instance-inspector';
 import { getNetworkRequests } from '../core/network-interceptor';
+import {
+  takeSnapshot,
+  saveSnapshot,
+  loadSnapshots,
+  diffSnapshots,
+  exportSnapshot,
+  type ClassSnapshot,
+  type SnapshotDiff,
+} from '../core/snapshot';
+import { sendMessage, MessageType } from '../core/message-bridge';
 
 /**
  * Summary of a view without live DOM references
@@ -196,6 +206,30 @@ interface FUTDBG {
    * Optional filter: URL substring match
    */
   net(filter?: string): NetworkRequestRecord[];
+
+  /**
+   * Take a snapshot of all registered classes and save to chrome.storage
+   * Prints summary to console
+   */
+  snapshot(): void;
+
+  /**
+   * List all saved snapshots with dates
+   * @returns Array of snapshots sorted by timestamp
+   */
+  snapshots(): ClassSnapshot[];
+
+  /**
+   * Diff the most recent vs second-most-recent snapshot
+   * Prints diff to console
+   */
+  diff(): void;
+
+  /**
+   * Export the most recent snapshot as JSON
+   * Prints JSON to console for copy-paste
+   */
+  export(): void;
 }
 
 /**
@@ -326,6 +360,10 @@ function createFUTDBG(): FUTDBG {
 - FUTDBG.watches() - Get all active property watches
 - FUTDBG.inspect(instance) - Open Instance Inspector window for an object
 - FUTDBG.net(filter?) - Display network requests (newest first, max 50, optional URL filter)
+- FUTDBG.snapshot() - Take snapshot of all classes and save (max 5 stored)
+- FUTDBG.snapshots() - List all saved snapshots with dates
+- FUTDBG.diff() - Diff most recent vs second-most-recent snapshot
+- FUTDBG.export() - Export most recent snapshot as JSON
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -349,6 +387,10 @@ Examples:
   FUTDBG.watches()                    // [{ id, path, strategy }, ...]
   FUTDBG.net()                        // Last 50 network requests
   FUTDBG.net('/ut/game/fc24')         // Filter by URL substring
+  FUTDBG.snapshot()                   // Capture current class signatures, save to storage
+  FUTDBG.snapshots()                  // List all saved snapshots with timestamps
+  FUTDBG.diff()                       // Show changes between last 2 snapshots
+  FUTDBG.export()                     // Print most recent snapshot as JSON
   FUTDBG.registry.classes             // Direct access to registry`;
     },
 
@@ -480,6 +522,130 @@ Examples:
       );
 
       return requests;
+    },
+
+    snapshot(): void {
+      const snap = takeSnapshot();
+      saveSnapshot(snap)
+        .then(() => {
+          console.log(
+            `[Snapshot] Saved at ${new Date(snap.timestamp).toLocaleString()}`,
+          );
+          console.log(`[Snapshot] ${snap.classes.length} classes captured`);
+          console.log(`[Snapshot] Version: ${snap.version}`);
+
+          // Send to DevTools for display
+          sendMessage(MessageType.SNAPSHOT_DATA, snap);
+        })
+        .catch((error) => {
+          console.error('[Snapshot] Failed to save:', error);
+        });
+    },
+
+    snapshots(): ClassSnapshot[] {
+      loadSnapshots()
+        .then((snaps) => {
+          if (snaps.length === 0) {
+            console.log('No snapshots saved');
+            return;
+          }
+
+          console.table(
+            snaps.map((s, idx) => ({
+              Index: idx,
+              Date: new Date(s.timestamp).toLocaleString(),
+              Classes: s.classes.length,
+              Version: s.version,
+            })),
+          );
+        })
+        .catch((error) => {
+          console.error('[Snapshot] Failed to load:', error);
+        });
+
+      return []; // Async, return empty array immediately
+    },
+
+    diff(): void {
+      loadSnapshots()
+        .then((snaps) => {
+          if (snaps.length < 2) {
+            console.log(
+              'Need at least 2 snapshots to diff. Current count:',
+              snaps.length,
+            );
+            return;
+          }
+
+          // Most recent vs second-most-recent
+          const recent = snaps[snaps.length - 1];
+          const previous = snaps[snaps.length - 2];
+
+          const diffResult = diffSnapshots(previous, recent);
+
+          console.log(
+            `[Diff] ${new Date(previous.timestamp).toLocaleString()} → ${new Date(recent.timestamp).toLocaleString()}`,
+          );
+
+          if (diffResult.addedClasses.length > 0) {
+            console.log(
+              `[Diff] Added classes (${diffResult.addedClasses.length}):`,
+              diffResult.addedClasses,
+            );
+          }
+
+          if (diffResult.removedClasses.length > 0) {
+            console.log(
+              `[Diff] Removed classes (${diffResult.removedClasses.length}):`,
+              diffResult.removedClasses,
+            );
+          }
+
+          if (diffResult.changedClasses.length > 0) {
+            console.log(
+              `[Diff] Changed classes (${diffResult.changedClasses.length}):`,
+            );
+            diffResult.changedClasses.forEach((change) => {
+              console.log(`  ${change.name}:`);
+              if (change.addedMethods.length > 0) {
+                console.log(`    + ${change.addedMethods.join(', ')}`);
+              }
+              if (change.removedMethods.length > 0) {
+                console.log(`    - ${change.removedMethods.join(', ')}`);
+              }
+            });
+          }
+
+          if (
+            diffResult.addedClasses.length === 0 &&
+            diffResult.removedClasses.length === 0 &&
+            diffResult.changedClasses.length === 0
+          ) {
+            console.log('[Diff] No changes detected');
+          }
+        })
+        .catch((error) => {
+          console.error('[Diff] Failed to load snapshots:', error);
+        });
+    },
+
+    export(): void {
+      loadSnapshots()
+        .then((snaps) => {
+          if (snaps.length === 0) {
+            console.log('No snapshots saved');
+            return;
+          }
+
+          const recent = snaps[snaps.length - 1];
+          const json = exportSnapshot(recent);
+
+          console.log('[Export] Most recent snapshot:');
+          console.log(json);
+        })
+        .catch((error) => {
+          console.error('[Export] Failed to load snapshots:', error);
+        });
     },
   };
 }
