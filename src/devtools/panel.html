@@ -3,11 +3,174 @@
   <head>
     <meta charset="UTF-8" />
     <title>FUT Debug Panel</title>
+    <link rel="stylesheet" href="../styles/devtools.css" />
   </head>
   <body>
-    <div id="panel-root">
-      <!-- Placeholder - Task 15 will populate -->
+    <!-- Tabs Header -->
+    <div class="tabs" id="tabs-header">
+      <div class="tab-btn active" data-tab="methodspy">Method Spy</div>
+      <div class="tab-btn" data-tab="network">Network</div>
+      <div class="tab-btn" data-tab="performance">Performance</div>
+      <div class="tab-btn" data-tab="navigation">Navigation</div>
+      <div class="tab-btn" data-tab="snapshots">Snapshots</div>
     </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Method Spy Tab -->
+      <div id="methodspy-content" class="tab-content active">
+        <div class="toolbar">
+          <input
+            type="text"
+            id="methodspy-filter"
+            placeholder="Filter class, method, or args..."
+          />
+          <button id="methodspy-clear">Clear</button>
+          <span style="flex: 1"></span>
+          <span class="text-dim" id="methodspy-count">0 calls</span>
+        </div>
+        <div class="split-view">
+          <div class="split-list">
+            <div class="data-table-container">
+              <table id="methodspy-table">
+                <thead>
+                  <tr>
+                    <th class="col-ts" data-sort="ts">Time</th>
+                    <th data-sort="className">Class</th>
+                    <th class="col-method" data-sort="methodName">Method</th>
+                    <th data-sort="args">Args</th>
+                    <th data-sort="result">Result</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="split-details" id="methodspy-details">
+            <div class="text-dim text-center" style="margin-top: 20px">
+              Select a call to view details
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Tab -->
+      <div id="network-content" class="tab-content">
+        <div class="toolbar">
+          <input
+            type="text"
+            id="network-filter"
+            placeholder="Filter URL or Status..."
+          />
+          <button id="network-clear">Clear</button>
+        </div>
+        <div class="split-view">
+          <div class="split-list">
+            <div class="data-table-container">
+              <table id="network-table">
+                <thead>
+                  <tr>
+                    <th class="col-ts" data-sort="ts">Time</th>
+                    <th class="col-method" data-sort="method">Method</th>
+                    <th data-sort="url">URL</th>
+                    <th class="col-status" data-sort="status">Status</th>
+                    <th class="col-dur" data-sort="durationMs">Time(ms)</th>
+                    <th data-sort="utClass">Initiator</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="split-details" id="network-details">
+            <div class="text-dim text-center" style="margin-top: 20px">
+              Select a request to view details
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Tab -->
+      <div id="performance-content" class="tab-content">
+        <div class="toolbar">
+          <input
+            type="text"
+            id="perf-filter"
+            placeholder="Filter class or method..."
+          />
+          <button id="perf-refresh">Refresh</button>
+        </div>
+        <div class="data-table-container">
+          <table id="perf-table">
+            <thead>
+              <tr>
+                <th data-sort="className">Class</th>
+                <th data-sort="methodName">Method</th>
+                <th class="text-right" data-sort="callCount">Calls</th>
+                <th class="text-right" data-sort="totalMs">Total(ms)</th>
+                <th class="text-right" data-sort="avgMs">Avg(ms)</th>
+                <th class="text-right" data-sort="p95Ms">P95(ms)</th>
+                <th class="text-right" data-sort="maxMs">Max(ms)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Navigation Tab -->
+      <div id="navigation-content" class="tab-content">
+        <div class="toolbar">
+          <button id="nav-refresh">Refresh</button>
+        </div>
+        <div class="data-table-container">
+          <table id="nav-table">
+            <thead>
+              <tr>
+                <th class="col-ts">Time</th>
+                <th class="col-type">Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Controllers</th>
+                <th>ViewModels</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Snapshots Tab -->
+      <div id="snapshots-content" class="tab-content">
+        <div class="toolbar">
+          <button id="snapshot-take">Take Snapshot</button>
+          <button id="snapshot-diff">Diff Selected</button>
+        </div>
+        <div class="split-view">
+          <div class="split-list">
+            <div class="data-table-container">
+              <table id="snapshot-table">
+                <thead>
+                  <tr>
+                    <th class="col-id">ID</th>
+                    <th class="col-ts">Time</th>
+                    <th>Class Count</th>
+                    <th>Version</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="split-details" id="snapshot-details">
+            <div class="text-dim text-center" style="margin-top: 20px">
+              Select snapshots to diff
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="panel.js"></script>
   </body>
 </html>

@@ -1,0 +1,243 @@
+:root {
+  --bg-color: #050514;
+  --text-color: #e0e8ff;
+  --accent-color: #4db8ff;
+  --border-color: #4db8ff;
+  --row-hover: rgba(77, 184, 255, 0.1);
+  --header-bg: rgba(77, 184, 255, 0.2);
+  --input-bg: #0b1020;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: monospace;
+  font-size: 11px;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background-color: #0b1020;
+  border-bottom: 1px solid var(--border-color);
+  user-select: none;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8892b0;
+}
+
+.tab-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-color);
+}
+
+.tab-btn.active {
+  background-color: var(--header-bg);
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab-content {
+  display: none;
+  height: 100%;
+  flex-direction: column;
+}
+
+.tab-content.active {
+  display: flex;
+}
+
+/* Toolbar/Filters */
+.toolbar {
+  padding: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+input[type='text'] {
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+  flex: 1;
+  max-width: 300px;
+}
+
+button {
+  background-color: var(--header-bg);
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+button:hover {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+}
+
+/* Tables */
+.data-table-container {
+  flex: 1;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th {
+  background-color: #0b1020;
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+td {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+tr:hover {
+  background-color: var(--row-hover);
+}
+
+tr.selected {
+  background-color: rgba(77, 184, 255, 0.2);
+}
+
+/* Split View for Details */
+.split-view {
+  display: flex;
+  height: 100%;
+}
+
+.split-list {
+  flex: 1;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.split-details {
+  flex: 0 0 300px; /* Default width */
+  overflow: auto;
+  padding: 8px;
+  background-color: #080a14;
+}
+
+.detail-section {
+  margin-bottom: 12px;
+}
+
+.detail-title {
+  font-weight: bold;
+  color: var(--accent-color);
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-content {
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #aab3d4;
+  font-size: 10px;
+}
+
+/* Utility Classes */
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+.text-error {
+  color: #ff6b6b;
+}
+.text-success {
+  color: #51cf66;
+}
+.text-dim {
+  color: #8892b0;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050514;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3b55;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4db8ff;
+}
+
+/* Specific Column Widths */
+.col-ts {
+  width: 80px;
+}
+.col-id {
+  width: 50px;
+}
+.col-method {
+  width: 150px;
+}
+.col-status {
+  width: 60px;
+}
+.col-dur {
+  width: 70px;
+}
+.col-type {
+  width: 100px;
+}
