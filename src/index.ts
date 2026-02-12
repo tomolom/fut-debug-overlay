@@ -5,6 +5,7 @@ import './core/message-bridge';
 import { activateDomHook } from './core/dom-hooks';
 import { hookAllUTClasses } from './core/ut-class-hooks';
 import { initEventHooks } from './core/event-hooks';
+import { installFUTDBG } from './api/futdbg';
 import { createShadowHost } from './ui/shadow-host';
 import {
   createOverlayElements,
@@ -86,6 +87,7 @@ function init(): void {
   activateDomHook(); // DOM ownership tracking
   hookAllUTClasses(); // UT class discovery and method wrapping
   initEventHooks(); // Event listener tracking
+  installFUTDBG(); // Install window.FUTDBG console API
   setupDebugOverlay(); // UI setup
   console.log('[UTDebug] Ready. Press Ctrl+Shift+U to toggle.');
 }
