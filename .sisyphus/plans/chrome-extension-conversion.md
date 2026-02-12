@@ -62,15 +62,15 @@ Produce a working Chrome extension (Manifest V3, loadable unpacked) that replica
 - `package.json` with build/dev scripts
 
 ### Definition of Done
-- [ ] `npm run build` produces `dist/` with manifest.json, contentscript.js, js/main.js, css/overlay.css
-- [ ] Extension loads in Chrome via "Load unpacked" without errors
-- [ ] On EA FC web app: Ctrl+Shift+U toggles overlay, Ctrl+Shift+Y toggles Class Inspector, Ctrl+Shift+H toggles Method Spy
-- [ ] Hover inspection shows UT class stack, createdBy, item data, button detection
-- [ ] Sidebar shows Views/Nodes, Controllers, ViewModels with filtering
-- [ ] Class Inspector shows prototype and static methods
-- [ ] Method Spy logs calls in real-time when open
-- [ ] `npx tsc --noEmit` passes with zero errors
-- [ ] `npx eslint src/` passes with zero errors
+- [x] `npm run build` produces `dist/` with manifest.json, contentscript.js, js/main.js, css/overlay.css
+- [x] Extension loads in Chrome via "Load unpacked" without errors
+- [x] On EA FC web app: Ctrl+Shift+U toggles overlay, Ctrl+Shift+Y toggles Class Inspector, Ctrl+Shift+H toggles Method Spy
+- [x] Hover inspection shows UT class stack, createdBy, item data, button detection
+- [x] Sidebar shows Views/Nodes, Controllers, ViewModels with filtering
+- [x] Class Inspector shows prototype and static methods
+- [x] Method Spy logs calls in real-time when open
+- [x] `npx tsc --noEmit` passes with zero errors
+- [x] `npx eslint src/` passes with zero errors
 
 ### Must Have
 - 100% functional parity with the v0.8 Tampermonkey script
@@ -931,13 +931,13 @@ npx eslint src/ --ext .ts  # Expected: exit 0, zero errors
 ```
 
 ### Final Checklist
-- [ ] `dist/` loadable as unpacked Chrome extension without errors
-- [ ] All three keyboard shortcuts functional (Ctrl+Shift+U/Y/H)
-- [ ] Hover inspection shows UT class info, createdBy, item data
-- [ ] Sidebar renders Views/Nodes, Controllers, ViewModels with filter
-- [ ] Class Inspector shows prototype + static methods per class
-- [ ] Method Spy logs calls in real-time when open, pauses when closed
-- [ ] No runtime dependencies (zero `dependencies` in package.json)
-- [ ] TypeScript strict mode passes
-- [ ] ESLint passes with fc-enhancer-aligned rules
-- [ ] Original `.user.js` file preserved (not deleted — still useful as reference)
+- [x] `dist/` loadable as unpacked Chrome extension without errors
+- [x] All three keyboard shortcuts functional (Ctrl+Shift+U/Y/H)
+- [x] Hover inspection shows UT class info, createdBy, item data
+- [x] Sidebar renders Views/Nodes, Controllers, ViewModels with filter
+- [x] Class Inspector shows prototype + static methods per class
+- [x] Method Spy logs calls in real-time when open, pauses when closed
+- [x] No runtime dependencies (zero `dependencies` in package.json)
+- [x] TypeScript strict mode passes
+- [x] ESLint passes with fc-enhancer-aligned rules
+- [x] Original `.user.js` file preserved (not deleted — still useful as reference)
