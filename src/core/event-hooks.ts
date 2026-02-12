@@ -6,6 +6,7 @@ import { registry as UTDebugRegistry } from './registry';
 import { isDebugEnabled } from './state';
 
 const originalAddEventListener = EventTarget.prototype.addEventListener;
+const MAX_LISTENERS = 5000;
 
 export function makeDomSelectorLike(el: any): string {
   if (!(el instanceof Element)) return '';
@@ -42,6 +43,10 @@ export function initEventHooks(): void {
             utStack: ut,
           };
           UTDebugRegistry.listeners.push(entry);
+          if (UTDebugRegistry.listeners.length > MAX_LISTENERS) {
+            UTDebugRegistry.listeners =
+              UTDebugRegistry.listeners.slice(-MAX_LISTENERS);
+          }
 
           // tag the element so we can spot it
           if (createdBy) {
