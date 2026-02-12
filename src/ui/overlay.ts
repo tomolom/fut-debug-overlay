@@ -16,6 +16,7 @@ import {
   getMethodSpyWindowEl,
   isClassWindowVisible,
   isMethodSpyVisible,
+  setSidebarDirty,
 } from '../core/state';
 import {
   getViewRecordForElement,
@@ -237,6 +238,7 @@ export function toggleDebug(): void {
     if (methodSpyWindowEl) methodSpyWindowEl.style.display = 'none';
   } else {
     rescanUTClasses();
+    setSidebarDirty(true);
     if (sidebarEl) sidebarEl.style.display = '';
     if (isClassWindowVisible() && classWindowEl)
       classWindowEl.style.display = 'block';

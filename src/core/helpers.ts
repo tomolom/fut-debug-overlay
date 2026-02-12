@@ -4,6 +4,7 @@
 
 import { registry } from './registry';
 import type { ViewRecord } from '../types';
+import { setSidebarDirty } from './state';
 
 export function getFunctionSignature(name: string, fn: any): string {
   if (typeof fn !== 'function') return `${name}()`;
@@ -130,6 +131,7 @@ export function ensureViewRecord(element: any): ViewRecord | null {
     };
     registry.viewMap.set(element, rec);
     registry.views.add(rec);
+    setSidebarDirty(true);
   } else {
     // refresh createdBy/stack if newly set
     if (!rec.createdBy && element.__utCreatedBy)
@@ -234,10 +236,12 @@ export function isElementOnCurrentPage(el: any): boolean {
 }
 
 export function pruneViewRegistry(): void {
+  let deletedAny = false;
   registry.views.forEach((rec) => {
     const el = rec.element;
     if (!isElementOnCurrentPage(el)) {
       registry.views.delete(rec);
+      deletedAny = true;
       return;
     }
     // Refresh createdBy/stack if DOM hook added it later
@@ -248,4 +252,7 @@ export function pruneViewRegistry(): void {
       rec.controlInfo = makeControlInfo(el);
     }
   });
+  if (deletedAny) {
+    setSidebarDirty(true);
+  }
 }
