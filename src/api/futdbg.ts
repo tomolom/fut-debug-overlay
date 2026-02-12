@@ -30,6 +30,7 @@ import {
   getWatches as getPropertyWatches,
   type WatchEntrySummary,
 } from '../core/property-watcher';
+import { inspectInstance } from '../ui/instance-inspector';
 
 /**
  * Summary of a view without live DOM references
@@ -177,6 +178,12 @@ interface FUTDBG {
    * @returns Array of watch summaries
    */
   watches(): WatchEntrySummary[];
+
+  /**
+   * Open the Instance Inspector for a specific object
+   * @param instance - The object to inspect
+   */
+  inspect(instance: any): void;
 }
 
 /**
@@ -305,6 +312,7 @@ function createFUTDBG(): FUTDBG {
 - FUTDBG.watch(instance, propName) - Watch a property for changes, returns watch ID
 - FUTDBG.unwatch(watchId) - Stop watching a property, returns true if removed
 - FUTDBG.watches() - Get all active property watches
+- FUTDBG.inspect(instance) - Open Instance Inspector window for an object
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -424,6 +432,10 @@ Examples:
 
     watches(): WatchEntrySummary[] {
       return getPropertyWatches();
+    },
+
+    inspect(instance: any): void {
+      inspectInstance(instance);
     },
   };
 }

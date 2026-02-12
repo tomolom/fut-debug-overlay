@@ -32,6 +32,12 @@ export const registry = {
   /** Cache of last pruned views (for sidebar rendering) */
   _lastViews: [] as ViewRecord[],
 
+  /** Cache of last controllers (for sidebar rendering) */
+  _lastControllers: [] as ControllerEntry[],
+
+  /** Cache of last view models (for sidebar rendering) */
+  _lastViewModels: [] as ViewModelEntry[],
+
   /** Map of UT class name -> ClassInfo (constructor, methods) */
   classes: new Map<string, ClassInfo>(),
 

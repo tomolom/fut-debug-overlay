@@ -16,6 +16,7 @@ import { registry } from '../core/registry';
 import { pruneViewRegistry, escapeHtml } from '../core/helpers';
 import { flashViewRecord } from './overlay';
 import { getShadowRoot } from './shadow-host';
+import { inspectInstance } from './instance-inspector';
 
 /**
  * Create sidebar panel with filter input
@@ -54,7 +55,7 @@ export function createSidebar(): void {
 }
 
 /**
- * Attach click handler to sidebar rows for flash-highlight
+ * Attach click handler to sidebar rows for flash-highlight and inspection
  */
 export function attachSidebarClickHandler(): void {
   const sidebarEl = getSidebarEl();
@@ -66,17 +67,46 @@ export function attachSidebarClickHandler(): void {
     while (
       node &&
       node !== sidebarEl &&
-      !node.classList.contains('ut-debug-view-row')
+      !node.classList.contains('ut-debug-view-row') &&
+      !node.classList.contains('ut-debug-ctrl-row') &&
+      !node.classList.contains('ut-debug-vm-row')
     ) {
       node = node.parentElement;
     }
     if (!node || node === sidebarEl) return;
 
-    const idx = Number(node.getAttribute('data-view-idx'));
-    const views = registry._lastViews || [];
-    const rec = views[idx];
-    if (!rec) return;
-    flashViewRecord(rec);
+    // View/Node click -> Flash highlight
+    if (node.classList.contains('ut-debug-view-row')) {
+      const idx = Number(node.getAttribute('data-view-idx'));
+      const views = registry._lastViews || [];
+      const rec = views[idx];
+      if (rec) {
+        flashViewRecord(rec);
+      }
+      return;
+    }
+
+    // Controller click -> Inspect
+    if (node.classList.contains('ut-debug-ctrl-row')) {
+      const idx = Number(node.getAttribute('data-ctrl-idx'));
+      const ctrls = registry._lastControllers || [];
+      const entry = ctrls[idx];
+      if (entry && entry.instance) {
+        inspectInstance(entry.instance);
+      }
+      return;
+    }
+
+    // ViewModel click -> Inspect
+    if (node.classList.contains('ut-debug-vm-row')) {
+      const idx = Number(node.getAttribute('data-vm-idx'));
+      const vms = registry._lastViewModels || [];
+      const entry = vms[idx];
+      if (entry && entry.instance) {
+        inspectInstance(entry.instance);
+      }
+      return;
+    }
   });
 }
 
@@ -104,15 +134,18 @@ export function updateSidebar(): void {
   const views = Array.from(registry.views);
   registry._lastViews = views;
 
-  const { controllers } = registry;
-  const vms = registry.viewModels;
+  // Use copies for rendering to match indices
+  const controllers = [...registry.controllers];
+  const vms = [...registry.viewModels];
+  registry._lastControllers = controllers;
+  registry._lastViewModels = vms;
 
   const filter = (registry.filterText || '').toLowerCase().trim();
 
   let html = '';
 
   // VIEWS / DOM nodes
-  const MAX_VIEW_ROWS = 500;
+  const MAX_ROWS = 200; // Reduced to balance multiple sections
   let renderedViewCount = 0;
   let totalMatchingViews = 0;
 
@@ -140,11 +173,13 @@ export function updateSidebar(): void {
 
     totalMatchingViews += 1;
 
-    if (renderedViewCount >= MAX_VIEW_ROWS) continue;
+    if (renderedViewCount >= MAX_ROWS) continue;
 
     html +=
       `<div class="ut-debug-view-row" data-view-idx="${i}">` +
-      `<div class="ut-debug-view-row-title">${escapeHtml(classList || createdBy || 'node')}</div>${
+      `<div class="ut-debug-view-row-title">${escapeHtml(
+        classList || createdBy || 'node',
+      )}</div>${
         snippet
           ? `<div class="ut-debug-view-row-snippet">${escapeHtml(snippet)}</div>`
           : ''
@@ -157,37 +192,60 @@ export function updateSidebar(): void {
     renderedViewCount += 1;
   }
 
-  if (totalMatchingViews > MAX_VIEW_ROWS) {
-    const remaining = totalMatchingViews - MAX_VIEW_ROWS;
+  if (totalMatchingViews > MAX_ROWS) {
+    const remaining = totalMatchingViews - MAX_ROWS;
     html += `<div style="padding:4px 8px;color:#888;font-style:italic;">... and ${remaining} more</div>`;
   }
 
   // CONTROLLERS
   html += `<div class="ut-debug-sidebar-section-title" style="margin-top:8px;">VIEW CONTROLLERS (${controllers.length})</div>`;
   html += '<hr/>';
-  const groupedControllers: Record<string, number> = {};
+
+  let renderedCtrlCount = 0;
+  let totalMatchingCtrls = 0;
+
   for (let i = 0; i < controllers.length; i += 1) {
     const c = controllers[i];
-    groupedControllers[c.className] =
-      (groupedControllers[c.className] || 0) + 1;
+    if (filter && !c.className.toLowerCase().includes(filter)) continue;
+
+    totalMatchingCtrls += 1;
+    if (renderedCtrlCount >= MAX_ROWS) continue;
+
+    html += `<div class="ut-debug-view-row ut-debug-ctrl-row" data-ctrl-idx="${i}">
+      <div class="ut-debug-view-row-title">${escapeHtml(c.className)}</div>
+    </div>`;
+    renderedCtrlCount += 1;
   }
-  Object.keys(groupedControllers).forEach((name) => {
-    if (filter && !name.toLowerCase().includes(filter)) return;
-    html += `<div>${escapeHtml(name)} x${groupedControllers[name]}</div>`;
-  });
+
+  if (totalMatchingCtrls > MAX_ROWS) {
+    const remaining = totalMatchingCtrls - MAX_ROWS;
+    html += `<div style="padding:4px 8px;color:#888;font-style:italic;">... and ${remaining} more</div>`;
+  }
 
   // VIEW MODELS
   html += `<div class="ut-debug-sidebar-section-title" style="margin-top:8px;">VIEW MODELS (${vms.length})</div>`;
   html += '<hr/>';
-  const groupedVMs: Record<string, number> = {};
+
+  let renderedVmCount = 0;
+  let totalMatchingVms = 0;
+
   for (let i = 0; i < vms.length; i += 1) {
     const vm = vms[i];
-    groupedVMs[vm.className] = (groupedVMs[vm.className] || 0) + 1;
+    if (filter && !vm.className.toLowerCase().includes(filter)) continue;
+
+    totalMatchingVms += 1;
+    if (renderedVmCount >= MAX_ROWS) continue;
+
+    html += `<div class="ut-debug-view-row ut-debug-vm-row" data-vm-idx="${i}">
+      <div class="ut-debug-view-row-title">${escapeHtml(vm.className)}</div>
+    </div>`;
+    renderedVmCount += 1;
   }
-  Object.keys(groupedVMs).forEach((name) => {
-    if (filter && !name.toLowerCase().includes(filter)) return;
-    html += `<div>${escapeHtml(name)} x${groupedVMs[name]}</div>`;
-  });
+
+  if (totalMatchingVms > MAX_ROWS) {
+    const remaining = totalMatchingVms - MAX_ROWS;
+    html += `<div style="padding:4px 8px;color:#888;font-style:italic;">... and ${remaining} more</div>`;
+  }
 
   sidebarContentEl.innerHTML = html;
   setSidebarDirty(false);
