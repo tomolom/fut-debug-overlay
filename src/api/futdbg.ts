@@ -12,6 +12,11 @@ import {
   getRules as getRulesEngine,
 } from '../core/rules-engine';
 import type { Rule } from '../core/rules-engine';
+import {
+  toggleFeature as toggleFeatureImpl,
+  getFeatures as getFeaturesImpl,
+  type FeatureKey,
+} from '../core/feature-toggles';
 
 /**
  * Summary of a view without live DOM references
@@ -110,6 +115,19 @@ interface FUTDBG {
    * Print help text describing all available commands
    */
   help(): string;
+
+  /**
+   * Toggle a feature on/off and return the new state
+   * @param feature - Feature key to toggle
+   * @returns The new state (true if enabled, false if disabled)
+   */
+  toggle(feature: FeatureKey): boolean;
+
+  /**
+   * Get all features and their current states
+   * @returns Object mapping feature keys to their boolean states
+   */
+  features(): Record<FeatureKey, boolean>;
 }
 
 /**
@@ -231,6 +249,8 @@ function createFUTDBG(): FUTDBG {
 - FUTDBG.addRule(rule) - Add conditional logging rule (max 20), returns rule ID
 - FUTDBG.removeRule(id) - Remove rule by ID, returns true if removed
 - FUTDBG.rules() - Get all active rules
+- FUTDBG.toggle(feature) - Toggle a feature on/off, returns new state
+- FUTDBG.features() - Get all features and their current states
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -244,7 +264,17 @@ Examples:
   FUTDBG.addRule({ methodName: 'render*', action: 'debugger' })  // Debugger on render*
   FUTDBG.rules()                      // [{ id, className, methodName, action, ... }, ...]
   FUTDBG.removeRule('rule-123')       // Remove rule by ID
+  FUTDBG.toggle('network')            // Toggle network monitor, returns new state
+  FUTDBG.features()                   // { overlay: true, sidebar: true, network: false, ... }
   FUTDBG.registry.classes             // Direct access to registry`;
+    },
+
+    toggle(feature: FeatureKey): boolean {
+      return toggleFeatureImpl(feature);
+    },
+
+    features(): Record<FeatureKey, boolean> {
+      return getFeaturesImpl();
     },
   };
 }

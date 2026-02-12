@@ -25,6 +25,7 @@ import {
   updateMethodSpyList,
 } from './ui/method-spy';
 import { isMethodSpyVisible } from './core/state';
+import { toggleFeature } from './core/feature-toggles';
 
 /**
  * Sets up the debug overlay UI and event listeners
@@ -54,6 +55,25 @@ function setupDebugOverlay(): void {
     // Ctrl+Shift+H: Toggle method spy
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
       toggleMethodSpyWindow();
+    }
+
+    // Ctrl+Shift+T: Cycle through features or show toggle instructions
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+      e.preventDefault();
+      console.log(
+        '[UTDebug] Feature Toggle - Use FUTDBG.toggle(feature) or FUTDBG.features() in console',
+      );
+      console.log('[UTDebug] Available features:', [
+        'overlay',
+        'sidebar',
+        'classinspector',
+        'methodspy',
+        'network',
+        'conditionallog',
+        'perfprofiler',
+        'navtimeline',
+        'propertywatcher',
+      ]);
     }
   });
 

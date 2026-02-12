@@ -25,6 +25,8 @@ const DEFAULT_DEBUG_STATE: DebugState = {
   perfProfilerEnabled: false,
   navTimelineEnabled: false,
   propertyWatcherEnabled: false,
+  classInspectorEnabled: false,
+  methodSpyEnabled: false,
 };
 
 export class DebugStore {

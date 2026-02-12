@@ -49,6 +49,10 @@ export interface DebugState {
   navTimelineEnabled: boolean;
   /** Feature toggle for property watcher module */
   propertyWatcherEnabled: boolean;
+  /** Feature toggle for class inspector module */
+  classInspectorEnabled: boolean;
+  /** Feature toggle for method spy module */
+  methodSpyEnabled: boolean;
 }
 
 /**
