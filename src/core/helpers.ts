@@ -230,18 +230,15 @@ export function escapeHtml(str: string): string {
 
 export function isElementOnCurrentPage(el: any): boolean {
   if (!el) return false;
-  if (!document.body.contains(el)) return false;
-  const rect = el.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) return false;
-  return true;
+  return el.isConnected === true;
 }
 
 export function pruneViewRegistry(): void {
-  for (const rec of Array.from(registry.views)) {
+  registry.views.forEach((rec) => {
     const el = rec.element;
     if (!isElementOnCurrentPage(el)) {
       registry.views.delete(rec);
-      continue;
+      return;
     }
     // Refresh createdBy/stack if DOM hook added it later
     if (!rec.createdBy && el.__utCreatedBy) rec.createdBy = el.__utCreatedBy;
@@ -250,5 +247,5 @@ export function pruneViewRegistry(): void {
     if (!rec.controlInfo && isDomButtonLike(el)) {
       rec.controlInfo = makeControlInfo(el);
     }
-  }
+  });
 }
