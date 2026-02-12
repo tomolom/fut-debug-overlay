@@ -29,6 +29,7 @@ interface MethodCallDispatchMeta {
   isStatic: boolean;
   threw: boolean;
   errorObj: unknown;
+  durationMs: number;
 }
 
 let methodCallDispatcherBound = false;
@@ -41,6 +42,7 @@ function dispatchMethodCall(
   resultValue: any,
   threw: boolean,
   errorObj: any,
+  durationMs: number,
 ): void {
   try {
     const meta: MethodCallDispatchMeta = {
@@ -49,6 +51,7 @@ function dispatchMethodCall(
       isStatic,
       threw,
       errorObj,
+      durationMs,
     };
 
     dispatcher.emit('method:call', {
@@ -293,19 +296,40 @@ export function registerClassInfo(name: string): void {
           if (!isMethodSpyVisible())
             return storedOriginal.apply(this, arguments);
 
+          const startTime = performance.now();
           let result;
 
           try {
             result = storedOriginal.apply(this, arguments);
           } catch (e) {
+            const durationMs = performance.now() - startTime;
             try {
-              dispatchMethodCall(name, k, false, arguments, undefined, true, e);
+              dispatchMethodCall(
+                name,
+                k,
+                false,
+                arguments,
+                undefined,
+                true,
+                e,
+                durationMs,
+              );
             } catch {}
             throw e;
           }
 
+          const durationMs = performance.now() - startTime;
           try {
-            dispatchMethodCall(name, k, false, arguments, result, false, null);
+            dispatchMethodCall(
+              name,
+              k,
+              false,
+              arguments,
+              result,
+              false,
+              null,
+              durationMs,
+            );
           } catch {}
 
           return result;
@@ -348,19 +372,40 @@ export function registerClassInfo(name: string): void {
           if (!isMethodSpyVisible())
             return storedOriginal.apply(this, arguments);
 
+          const startTime = performance.now();
           let result;
 
           try {
             result = storedOriginal.apply(this, arguments);
           } catch (e) {
+            const durationMs = performance.now() - startTime;
             try {
-              dispatchMethodCall(name, k, true, arguments, undefined, true, e);
+              dispatchMethodCall(
+                name,
+                k,
+                true,
+                arguments,
+                undefined,
+                true,
+                e,
+                durationMs,
+              );
             } catch {}
             throw e;
           }
 
+          const durationMs = performance.now() - startTime;
           try {
-            dispatchMethodCall(name, k, true, arguments, result, false, null);
+            dispatchMethodCall(
+              name,
+              k,
+              true,
+              arguments,
+              result,
+              false,
+              null,
+              durationMs,
+            );
           } catch {}
 
           return result;

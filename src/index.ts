@@ -6,6 +6,7 @@ import { activateDomHook } from './core/dom-hooks';
 import { hookAllUTClasses } from './core/ut-class-hooks';
 import { initEventHooks } from './core/event-hooks';
 import { initRulesEngine } from './core/rules-engine';
+import { initPerfProfiler } from './core/perf-profiler';
 import { installFUTDBG } from './api/futdbg';
 import { createShadowHost } from './ui/shadow-host';
 import {
@@ -109,6 +110,7 @@ function init(): void {
   hookAllUTClasses(); // UT class discovery and method wrapping
   initEventHooks(); // Event listener tracking
   initRulesEngine(); // Conditional logging rules engine
+  initPerfProfiler(); // Performance profiler
   installFUTDBG(); // Install window.FUTDBG console API
   setupDebugOverlay(); // UI setup
   console.log('[UTDebug] Ready. Press Ctrl+Shift+U to toggle.');

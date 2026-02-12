@@ -17,6 +17,12 @@ import {
   getFeatures as getFeaturesImpl,
   type FeatureKey,
 } from '../core/feature-toggles';
+import {
+  getStats as getPerfStats,
+  getTopN as getPerfTopN,
+  resetStats as resetPerfStats,
+  type MethodStats,
+} from '../core/perf-profiler';
 
 /**
  * Summary of a view without live DOM references
@@ -128,6 +134,14 @@ interface FUTDBG {
    * @returns Object mapping feature keys to their boolean states
    */
   features(): Record<FeatureKey, boolean>;
+
+  /**
+   * Get performance profiler stats
+   * If no className provided, prints top 20 methods by totalMs
+   * If className provided, filters stats by className and prints all matching
+   * @param className - Optional class name filter
+   */
+  perf(className?: string): void;
 }
 
 /**
@@ -251,6 +265,7 @@ function createFUTDBG(): FUTDBG {
 - FUTDBG.rules() - Get all active rules
 - FUTDBG.toggle(feature) - Toggle a feature on/off, returns new state
 - FUTDBG.features() - Get all features and their current states
+- FUTDBG.perf(className?) - Show performance stats (top 20 or filtered by className)
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -266,6 +281,8 @@ Examples:
   FUTDBG.removeRule('rule-123')       // Remove rule by ID
   FUTDBG.toggle('network')            // Toggle network monitor, returns new state
   FUTDBG.features()                   // { overlay: true, sidebar: true, network: false, ... }
+  FUTDBG.perf()                       // Top 20 methods by total time
+  FUTDBG.perf('UTPlayerItemView')     // All stats for classes matching 'UTPlayerItemView'
   FUTDBG.registry.classes             // Direct access to registry`;
     },
 
@@ -275,6 +292,61 @@ Examples:
 
     features(): Record<FeatureKey, boolean> {
       return getFeaturesImpl();
+    },
+
+    perf(className?: string): void {
+      if (!className) {
+        // Print top 20 by totalMs
+        const top20 = getPerfTopN(20, 'totalMs');
+        if (top20.length === 0) {
+          console.log('No performance stats available');
+          return;
+        }
+
+        console.table(
+          top20.map((stat) => ({
+            Class: stat.className,
+            Method: stat.methodName,
+            Calls: stat.callCount,
+            'Total (ms)': stat.totalMs.toFixed(2),
+            'Avg (ms)': stat.avgMs.toFixed(2),
+            'Min (ms)': stat.minMs.toFixed(2),
+            'Max (ms)': stat.maxMs.toFixed(2),
+            'P95 (ms)': stat.p95Ms.toFixed(2),
+          })),
+        );
+      } else {
+        // Filter by className
+        const allStats = getPerfStats();
+        const filtered: MethodStats[] = [];
+
+        allStats.forEach((stat) => {
+          if (stat.className.includes(className)) {
+            filtered.push(stat);
+          }
+        });
+
+        if (filtered.length === 0) {
+          console.log(`No performance stats found for class: ${className}`);
+          return;
+        }
+
+        // Sort by totalMs descending
+        filtered.sort((a, b) => b.totalMs - a.totalMs);
+
+        console.table(
+          filtered.map((stat) => ({
+            Class: stat.className,
+            Method: stat.methodName,
+            Calls: stat.callCount,
+            'Total (ms)': stat.totalMs.toFixed(2),
+            'Avg (ms)': stat.avgMs.toFixed(2),
+            'Min (ms)': stat.minMs.toFixed(2),
+            'Max (ms)': stat.maxMs.toFixed(2),
+            'P95 (ms)': stat.p95Ms.toFixed(2),
+          })),
+        );
+      }
     },
   };
 }
