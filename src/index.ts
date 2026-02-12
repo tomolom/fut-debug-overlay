@@ -7,6 +7,7 @@ import { hookAllUTClasses } from './core/ut-class-hooks';
 import { initEventHooks } from './core/event-hooks';
 import { initRulesEngine } from './core/rules-engine';
 import { initPerfProfiler } from './core/perf-profiler';
+import { initNavTracker } from './core/nav-tracker';
 import { installFUTDBG } from './api/futdbg';
 import { createShadowHost } from './ui/shadow-host';
 import {
@@ -111,6 +112,7 @@ function init(): void {
   initEventHooks(); // Event listener tracking
   initRulesEngine(); // Conditional logging rules engine
   initPerfProfiler(); // Performance profiler
+  initNavTracker(); // Navigation/routing timeline tracker
   installFUTDBG(); // Install window.FUTDBG console API
   setupDebugOverlay(); // UI setup
   console.log('[UTDebug] Ready. Press Ctrl+Shift+U to toggle.');

@@ -23,6 +23,7 @@ import {
   resetStats as resetPerfStats,
   type MethodStats,
 } from '../core/perf-profiler';
+import { getNavEvents, type NavEvent } from '../core/nav-tracker';
 
 /**
  * Summary of a view without live DOM references
@@ -142,6 +143,12 @@ interface FUTDBG {
    * @param className - Optional class name filter
    */
   perf(className?: string): void;
+
+  /**
+   * Display navigation timeline (newest first, max 50 events)
+   * Shows timestamp, type, URLs, UT router class, and controller/viewModel counts
+   */
+  nav(): void;
 }
 
 /**
@@ -266,6 +273,7 @@ function createFUTDBG(): FUTDBG {
 - FUTDBG.toggle(feature) - Toggle a feature on/off, returns new state
 - FUTDBG.features() - Get all features and their current states
 - FUTDBG.perf(className?) - Show performance stats (top 20 or filtered by className)
+- FUTDBG.nav() - Display navigation timeline (newest first, max 50)
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -283,6 +291,7 @@ Examples:
   FUTDBG.features()                   // { overlay: true, sidebar: true, network: false, ... }
   FUTDBG.perf()                       // Top 20 methods by total time
   FUTDBG.perf('UTPlayerItemView')     // All stats for classes matching 'UTPlayerItemView'
+  FUTDBG.nav()                        // Show navigation events with timestamps, types, URLs
   FUTDBG.registry.classes             // Direct access to registry`;
     },
 
@@ -347,6 +356,26 @@ Examples:
           })),
         );
       }
+    },
+
+    nav(): void {
+      const events = getNavEvents(50);
+      if (events.length === 0) {
+        console.log('No navigation events recorded');
+        return;
+      }
+
+      console.table(
+        events.map((e) => ({
+          Time: new Date(e.ts).toLocaleTimeString(),
+          Type: e.type,
+          From: e.from,
+          To: e.to,
+          UTClass: e.utClass || '-',
+          Controllers: e.controllersSnapshot.length,
+          ViewModels: e.viewModelsSnapshot.length,
+        })),
+      );
     },
   };
 }
