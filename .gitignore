@@ -12,3 +12,9 @@ desktop.ini
 # Node
 node_modules/
 dist/
+
+# Project management / AI artifacts
+.sisyphus/
+.boulder/
+.prometheus/
+.atlas/
