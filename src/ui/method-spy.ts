@@ -14,6 +14,8 @@ import {
   setMethodSpyDetailsEl,
   getMethodSpyFilterInput,
   setMethodSpyFilterInput,
+  isMethodSpyNeedsRefresh,
+  setMethodSpyNeedsRefresh,
 } from '../core/state';
 import { registry } from '../core/registry';
 import { escapeHtml } from '../core/helpers';
@@ -106,9 +108,23 @@ export function createMethodSpyWindow(): void {
 }
 
 /**
+ * Fast time formatter - returns HH:MM:SS without locale overhead
+ */
+function fastTimeStr(ts: number): string {
+  const d = new Date(ts);
+  const h = d.getHours().toString().padStart(2, '0');
+  const m = d.getMinutes().toString().padStart(2, '0');
+  const s = d.getSeconds().toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+/**
  * Update method spy list with filtered calls
  */
 export function updateMethodSpyList(): void {
+  if (!isMethodSpyNeedsRefresh()) {
+    return;
+  }
   const methodSpyListEl = getMethodSpyListEl();
   if (!methodSpyListEl) return;
 
@@ -116,15 +132,15 @@ export function updateMethodSpyList(): void {
   const filter = ((methodSpyFilterInput && methodSpyFilterInput.value) || '')
     .toLowerCase()
     .trim();
-  const calls = registry.methodCalls.toArrayNewestFirst();
+  const callsArray = registry.methodCalls.toArrayNewestFirst();
+  const MAX_RENDERED = 500;
   let html = '';
   let renderedCount = 0;
-  const MAX_RENDERED = 500;
 
   // Calls already newest-first from ring buffer
-  for (let i = 0; i < calls.length; i += 1) {
-    const c = calls[i];
-    const timeStr = new Date(c.ts).toLocaleTimeString();
+  for (let i = 0; i < callsArray.length; i += 1) {
+    const c = callsArray[i];
+    const timeStr = fastTimeStr(c.ts);
     const head = `${c.className}.${c.methodName}`;
     const base = `${head} ${c.argPreviews.join(' ')} ${c.resultPreview || ''} ${c.errorPreview || ''}`;
     const haystack = base.toLowerCase();
@@ -133,7 +149,7 @@ export function updateMethodSpyList(): void {
 
     // Cap rendering at 500 rows
     if (renderedCount >= MAX_RENDERED) {
-      const remaining = calls.length - i;
+      const remaining = callsArray.length - i;
       html += `<div class="ut-debug-methodspy-row" style="font-style: italic; opacity: 0.6;">... ${remaining} more calls (use filter to narrow)</div>`;
       break;
     }
@@ -155,6 +171,7 @@ export function updateMethodSpyList(): void {
 
   methodSpyListEl.innerHTML =
     html || '<div class="ut-debug-methodspy-row">(no calls logged yet)</div>';
+  setMethodSpyNeedsRefresh(false);
 }
 
 /**
