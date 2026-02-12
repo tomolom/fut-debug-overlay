@@ -1,198 +1,180 @@
 /**
- * Shared state module for debug flags and UI element references
+ * Backward-compatible state API.
+ * Reactive state now lives in store.ts and UI element refs in ui-refs.ts.
  */
 
-let debugEnabled = false;
-let methodSpyVisible = false;
-let methodSpyNextId = 1;
-let methodSpyNeedsRefresh = false;
-let sidebarDirty = true;
+export * from './store';
+export * from './ui-refs';
 
-// UI element references
-let tooltipEl: HTMLDivElement | null = null;
-let highlightEl: HTMLDivElement | null = null;
-let badgeEl: HTMLDivElement | null = null;
-let sidebarEl: HTMLDivElement | null = null;
-let sidebarContentEl: HTMLDivElement | null = null;
-let sidebarFilterInput: HTMLInputElement | null = null;
-
-let classWindowEl: HTMLDivElement | null = null;
-let classWindowClassListEl: HTMLDivElement | null = null;
-let classWindowMethodListEl: HTMLDivElement | null = null;
-let classWindowFilterInput: HTMLInputElement | null = null;
-let classWindowVisible = false;
-let selectedClassName: string | null = null;
-
-let methodSpyWindowEl: HTMLDivElement | null = null;
-let methodSpyListEl: HTMLDivElement | null = null;
-let methodSpyDetailsEl: HTMLDivElement | null = null;
-let methodSpyFilterInput: HTMLInputElement | null = null;
+import { get, set } from './store';
+import { getUiRef, setUiRef } from './ui-refs';
 
 export function isDebugEnabled(): boolean {
-  return debugEnabled;
+  return get('debugEnabled');
 }
 
 export function setDebugEnabled(enabled: boolean): void {
-  debugEnabled = enabled;
+  set({ debugEnabled: enabled });
 }
 
 export function isMethodSpyVisible(): boolean {
-  return methodSpyVisible;
+  return get('methodSpyVisible');
 }
 
 export function setMethodSpyVisible(visible: boolean): void {
-  methodSpyVisible = visible;
+  set({ methodSpyVisible: visible });
 }
 
 export function getMethodSpyNextId(): number {
-  return methodSpyNextId;
+  return get('methodSpyNextId');
 }
 
 export function incrementMethodSpyNextId(): number {
-  return methodSpyNextId++;
+  const currentId = get('methodSpyNextId');
+  set({ methodSpyNextId: currentId + 1 });
+  return currentId;
 }
 
 export function isMethodSpyNeedsRefresh(): boolean {
-  return methodSpyNeedsRefresh;
+  return get('methodSpyNeedsRefresh');
 }
 
 export function setMethodSpyNeedsRefresh(needs: boolean): void {
-  methodSpyNeedsRefresh = needs;
+  set({ methodSpyNeedsRefresh: needs });
 }
 
 export function isSidebarDirty(): boolean {
-  return sidebarDirty;
+  return get('sidebarDirty');
 }
 
 export function setSidebarDirty(dirty: boolean): void {
-  sidebarDirty = dirty;
+  set({ sidebarDirty: dirty });
 }
 
-// UI element getters/setters
 export function getTooltipEl(): HTMLDivElement | null {
-  return tooltipEl;
+  return getUiRef('tooltipEl');
 }
 
 export function setTooltipEl(el: HTMLDivElement | null): void {
-  tooltipEl = el;
+  setUiRef('tooltipEl', el);
 }
 
 export function getHighlightEl(): HTMLDivElement | null {
-  return highlightEl;
+  return getUiRef('highlightEl');
 }
 
 export function setHighlightEl(el: HTMLDivElement | null): void {
-  highlightEl = el;
+  setUiRef('highlightEl', el);
 }
 
 export function getBadgeEl(): HTMLDivElement | null {
-  return badgeEl;
+  return getUiRef('badgeEl');
 }
 
 export function setBadgeEl(el: HTMLDivElement | null): void {
-  badgeEl = el;
+  setUiRef('badgeEl', el);
 }
 
 export function getSidebarEl(): HTMLDivElement | null {
-  return sidebarEl;
+  return getUiRef('sidebarEl');
 }
 
 export function setSidebarEl(el: HTMLDivElement | null): void {
-  sidebarEl = el;
+  setUiRef('sidebarEl', el);
 }
 
 export function getSidebarContentEl(): HTMLDivElement | null {
-  return sidebarContentEl;
+  return getUiRef('sidebarContentEl');
 }
 
 export function setSidebarContentEl(el: HTMLDivElement | null): void {
-  sidebarContentEl = el;
+  setUiRef('sidebarContentEl', el);
 }
 
 export function getSidebarFilterInput(): HTMLInputElement | null {
-  return sidebarFilterInput;
+  return getUiRef('sidebarFilterInput');
 }
 
 export function setSidebarFilterInput(el: HTMLInputElement | null): void {
-  sidebarFilterInput = el;
+  setUiRef('sidebarFilterInput', el);
 }
 
 export function getClassWindowEl(): HTMLDivElement | null {
-  return classWindowEl;
+  return getUiRef('classWindowEl');
 }
 
 export function setClassWindowEl(el: HTMLDivElement | null): void {
-  classWindowEl = el;
+  setUiRef('classWindowEl', el);
 }
 
 export function getClassWindowClassListEl(): HTMLDivElement | null {
-  return classWindowClassListEl;
+  return getUiRef('classWindowClassListEl');
 }
 
 export function setClassWindowClassListEl(el: HTMLDivElement | null): void {
-  classWindowClassListEl = el;
+  setUiRef('classWindowClassListEl', el);
 }
 
 export function getClassWindowMethodListEl(): HTMLDivElement | null {
-  return classWindowMethodListEl;
+  return getUiRef('classWindowMethodListEl');
 }
 
 export function setClassWindowMethodListEl(el: HTMLDivElement | null): void {
-  classWindowMethodListEl = el;
+  setUiRef('classWindowMethodListEl', el);
 }
 
 export function getClassWindowFilterInput(): HTMLInputElement | null {
-  return classWindowFilterInput;
+  return getUiRef('classWindowFilterInput');
 }
 
 export function setClassWindowFilterInput(el: HTMLInputElement | null): void {
-  classWindowFilterInput = el;
+  setUiRef('classWindowFilterInput', el);
 }
 
 export function isClassWindowVisible(): boolean {
-  return classWindowVisible;
+  return get('classWindowVisible');
 }
 
 export function setClassWindowVisible(visible: boolean): void {
-  classWindowVisible = visible;
+  set({ classWindowVisible: visible });
 }
 
 export function getSelectedClassName(): string | null {
-  return selectedClassName;
+  return get('selectedClassName');
 }
 
 export function setSelectedClassName(name: string | null): void {
-  selectedClassName = name;
+  set({ selectedClassName: name });
 }
 
 export function getMethodSpyWindowEl(): HTMLDivElement | null {
-  return methodSpyWindowEl;
+  return getUiRef('methodSpyWindowEl');
 }
 
 export function setMethodSpyWindowEl(el: HTMLDivElement | null): void {
-  methodSpyWindowEl = el;
+  setUiRef('methodSpyWindowEl', el);
 }
 
 export function getMethodSpyListEl(): HTMLDivElement | null {
-  return methodSpyListEl;
+  return getUiRef('methodSpyListEl');
 }
 
 export function setMethodSpyListEl(el: HTMLDivElement | null): void {
-  methodSpyListEl = el;
+  setUiRef('methodSpyListEl', el);
 }
 
 export function getMethodSpyDetailsEl(): HTMLDivElement | null {
-  return methodSpyDetailsEl;
+  return getUiRef('methodSpyDetailsEl');
 }
 
 export function setMethodSpyDetailsEl(el: HTMLDivElement | null): void {
-  methodSpyDetailsEl = el;
+  setUiRef('methodSpyDetailsEl', el);
 }
 
 export function getMethodSpyFilterInput(): HTMLInputElement | null {
-  return methodSpyFilterInput;
+  return getUiRef('methodSpyFilterInput');
 }
 
 export function setMethodSpyFilterInput(el: HTMLInputElement | null): void {
-  methodSpyFilterInput = el;
+  setUiRef('methodSpyFilterInput', el);
 }

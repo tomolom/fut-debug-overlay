@@ -18,6 +18,40 @@ export interface ViewRecord {
 }
 
 /**
+ * DebugState - Shared reactive state for debug behavior and feature toggles
+ */
+export interface DebugState {
+  /** Master toggle for debug overlay runtime behavior */
+  debugEnabled: boolean;
+  /** Feature visibility toggle for core overlay UI */
+  overlayEnabled: boolean;
+  /** Feature visibility toggle for sidebar panel */
+  sidebarEnabled: boolean;
+  /** Whether the Method Spy panel is currently visible */
+  methodSpyVisible: boolean;
+  /** Next monotonically increasing ID for method spy call records */
+  methodSpyNextId: number;
+  /** Whether method spy list requires re-render */
+  methodSpyNeedsRefresh: boolean;
+  /** Whether sidebar content is marked dirty and needs refresh */
+  sidebarDirty: boolean;
+  /** Whether class inspector window is currently visible */
+  classWindowVisible: boolean;
+  /** Selected class in class inspector */
+  selectedClassName: string | null;
+  /** Feature toggle for network monitor module */
+  networkMonitorEnabled: boolean;
+  /** Feature toggle for conditional logging module */
+  conditionalLoggingEnabled: boolean;
+  /** Feature toggle for performance profiler module */
+  perfProfilerEnabled: boolean;
+  /** Feature toggle for navigation timeline module */
+  navTimelineEnabled: boolean;
+  /** Feature toggle for property watcher module */
+  propertyWatcherEnabled: boolean;
+}
+
+/**
  * ControlInfo - Metadata for interactive controls (buttons, inputs, etc.)
  * Extracted from button elements and elements with button-like CSS classes
  */
