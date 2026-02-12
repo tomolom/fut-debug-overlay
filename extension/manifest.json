@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "FUT Debug Overlay",
+  "version": "1.0.0",
+  "description": "Real-time debugging overlay for EA FC Ultimate Team web app",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.ea.com/*",
+        "https://www.easports.com/*"
+      ],
+      "js": ["contentscript.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["js/main.js", "css/main.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

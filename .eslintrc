@@ -1,0 +1,37 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "airbnb-base",
+    "airbnb-typescript/base",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json"
+  },
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    "no-underscore-dangle": "off",
+    "import/prefer-default-export": "off",
+    "import/no-cycle": "off",
+    "no-restricted-syntax": [
+      "error",
+      "ForInStatement",
+      "LabeledStatement",
+      "WithStatement"
+    ],
+    "func-names": ["error", "never"],
+    "class-methods-use-this": "off",
+    "no-param-reassign": "off",
+    "no-await-in-loop": "off",
+    "no-alert": "off",
+    "no-bitwise": "off",
+    "consistent-return": ["error", { "treatUndefinedAsUnspecified": false }],
+    "@typescript-eslint/naming-convention": "off"
+  }
+}
