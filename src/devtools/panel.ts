@@ -93,7 +93,34 @@ function init() {
   requestAnimationFrame(renderLoop);
 }
 
+let contextInvalidated = false;
+
+function isContextInvalid(): boolean {
+  try {
+    return !chrome.runtime?.id;
+  } catch {
+    return true;
+  }
+}
+
+function showDisconnected(reason: string) {
+  const body = document.body;
+  const banner = document.createElement('div');
+  banner.style.cssText =
+    'position:fixed;top:0;left:0;right:0;padding:12px;background:#1a0a0a;color:#ff6b6b;text-align:center;font-family:monospace;font-size:12px;z-index:9999;border-bottom:1px solid #ff6b6b';
+  banner.textContent = reason;
+  body.prepend(banner);
+}
+
 function connectToBackground() {
+  if (contextInvalidated || isContextInvalid()) {
+    contextInvalidated = true;
+    showDisconnected(
+      'Extension was reloaded. Close and reopen DevTools to reconnect.',
+    );
+    return;
+  }
+
   try {
     port = chrome.runtime.connect({ name: `fut-debug-devtools:${tabId}` });
 
@@ -102,16 +129,27 @@ function connectToBackground() {
     });
 
     port.onDisconnect.addListener(() => {
-      console.warn('Disconnected from background. Reconnecting in 1s...');
       port = null;
-      setTimeout(connectToBackground, 1000);
+      if (isContextInvalid()) {
+        contextInvalidated = true;
+        showDisconnected(
+          'Extension was reloaded. Close and reopen DevTools to reconnect.',
+        );
+      } else {
+        setTimeout(connectToBackground, 1000);
+      }
     });
 
     // Request initial state
     port.postMessage({ type: 'GET_INITIAL_STATE' });
     port.postMessage({ type: 'GET_FEATURE_STATES' });
   } catch (e) {
-    console.error('Connection failed:', e);
+    if (String(e).includes('Extension context invalidated')) {
+      contextInvalidated = true;
+      showDisconnected(
+        'Extension was reloaded. Close and reopen DevTools to reconnect.',
+      );
+    }
   }
 }
 
