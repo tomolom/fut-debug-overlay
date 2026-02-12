@@ -1,5 +1,6 @@
 // Entry point for FUT UT View Debug Overlay Chrome Extension
 import './styles/overlay.css';
+import './core/message-bridge';
 
 // Import all modules
 import { activateDomHook } from './core/dom-hooks';
