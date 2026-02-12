@@ -3,13 +3,14 @@ export type HookEventName =
   | 'dom:insertBefore'
   | 'dom:replaceChild'
   | 'event:addEventListener'
-  | 'method:call';
+  | 'method:call'
+  | 'network:request';
 
 export interface HookDispatchPayload {
-  source: string;
-  node: unknown;
-  args: unknown[];
-  originalResult: unknown;
+  source?: string;
+  node?: unknown;
+  args?: unknown[];
+  originalResult?: unknown;
 }
 
 export type HookCallback = (payload: HookDispatchPayload) => void;

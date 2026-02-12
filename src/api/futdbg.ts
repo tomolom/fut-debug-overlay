@@ -5,7 +5,12 @@
  */
 
 import { registry } from '../core/registry';
-import type { ClassInfo, MethodCall, ViewRecord } from '../types';
+import type {
+  ClassInfo,
+  MethodCall,
+  NetworkRequestRecord,
+  ViewRecord,
+} from '../types';
 import {
   addRule as addRuleEngine,
   removeRule as removeRuleEngine,
@@ -31,6 +36,7 @@ import {
   type WatchEntrySummary,
 } from '../core/property-watcher';
 import { inspectInstance } from '../ui/instance-inspector';
+import { getNetworkRequests } from '../core/network-interceptor';
 
 /**
  * Summary of a view without live DOM references
@@ -184,6 +190,12 @@ interface FUTDBG {
    * @param instance - The object to inspect
    */
   inspect(instance: any): void;
+
+  /**
+   * Display network requests (newest first, max 50)
+   * Optional filter: URL substring match
+   */
+  net(filter?: string): NetworkRequestRecord[];
 }
 
 /**
@@ -313,6 +325,7 @@ function createFUTDBG(): FUTDBG {
 - FUTDBG.unwatch(watchId) - Stop watching a property, returns true if removed
 - FUTDBG.watches() - Get all active property watches
 - FUTDBG.inspect(instance) - Open Instance Inspector window for an object
+- FUTDBG.net(filter?) - Display network requests (newest first, max 50, optional URL filter)
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -334,6 +347,8 @@ Examples:
   FUTDBG.watch(playerItem, 'rating')  // Watch playerItem.rating for changes
   FUTDBG.unwatch('watch-1')           // Stop watching
   FUTDBG.watches()                    // [{ id, path, strategy }, ...]
+  FUTDBG.net()                        // Last 50 network requests
+  FUTDBG.net('/ut/game/fc24')         // Filter by URL substring
   FUTDBG.registry.classes             // Direct access to registry`;
     },
 
@@ -436,6 +451,35 @@ Examples:
 
     inspect(instance: any): void {
       inspectInstance(instance);
+    },
+
+    net(filter?: string): NetworkRequestRecord[] {
+      const requests = getNetworkRequests(50, filter);
+
+      if (requests.length === 0) {
+        console.log(
+          filter
+            ? `No network requests found for filter: ${filter}`
+            : 'No network requests recorded',
+        );
+        return [];
+      }
+
+      console.table(
+        requests.map((entry) => ({
+          Time: new Date(entry.ts).toLocaleTimeString(),
+          Method: entry.method,
+          URL: entry.url,
+          Status: entry.status,
+          'Duration (ms)': entry.durationMs.toFixed(2),
+          Size: entry.size ?? '-',
+          UTClass: entry.utClass || '-',
+          UTMethod: entry.utMethod || '-',
+          CorrelationId: entry.correlationId,
+        })),
+      );
+
+      return requests;
     },
   };
 }

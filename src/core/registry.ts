@@ -1,6 +1,7 @@
 import type {
   ViewRecord,
   MethodCall,
+  NetworkRequestRecord,
   ClassInfo,
   ListenerEntry,
   ControllerEntry,
@@ -43,6 +44,9 @@ export const registry = {
 
   /** Ring buffer of all recorded method calls (newest entries added to end, oldest auto-evicted at 50k) */
   methodCalls: new RingBuffer<MethodCall>(50000),
+
+  /** Ring buffer of all recorded network requests (newest entries added to end, oldest auto-evicted at 5k) */
+  networkRequests: new RingBuffer<NetworkRequestRecord>(5000),
 
   /** Array of all recorded event listener attachments */
   listeners: [] as ListenerEntry[],

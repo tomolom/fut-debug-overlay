@@ -98,6 +98,32 @@ export interface MethodCall {
 }
 
 /**
+ * NetworkRequestRecord - Record of a network/API request captured by fetch/XHR hooks
+ */
+export interface NetworkRequestRecord {
+  /** Unique sequential ID for this request */
+  id: number;
+  /** Timestamp when the request started (milliseconds since epoch) */
+  ts: number;
+  /** Request URL */
+  url: string;
+  /** HTTP method */
+  method: string;
+  /** HTTP status code (0 for network failures) */
+  status: number;
+  /** Request duration in milliseconds */
+  durationMs: number;
+  /** Estimated response size in bytes when available */
+  size: number | null;
+  /** Name of the UT class found in stack attribution */
+  utClass: string | null;
+  /** Name of the UT method found in stack attribution */
+  utMethod: string | null;
+  /** Correlates lifecycle events for the same request */
+  correlationId: string;
+}
+
+/**
  * ClassInfo - Metadata about a registered UT class
  * Includes constructor reference and method signatures
  */
