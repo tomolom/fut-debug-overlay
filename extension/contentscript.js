@@ -3,7 +3,7 @@ mainScript.src = chrome.runtime.getURL('js/main.js');
 
 const cssLink = document.createElement('link');
 cssLink.rel = 'stylesheet';
-cssLink.href = chrome.runtime.getURL('css/main.css');
+cssLink.href = chrome.runtime.getURL('fut-debug-overlay.css');
 
 (document.head ?? document.documentElement).appendChild(cssLink);
 (document.head || document.documentElement).appendChild(mainScript);

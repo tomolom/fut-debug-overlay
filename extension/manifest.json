@@ -16,7 +16,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["js/main.js", "css/main.css"],
+      "resources": ["js/main.js", "fut-debug-overlay.css"],
       "matches": ["<all_urls>"]
     }
   ]
