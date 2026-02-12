@@ -24,6 +24,12 @@ import {
   type MethodStats,
 } from '../core/perf-profiler';
 import { getNavEvents, type NavEvent } from '../core/nav-tracker';
+import {
+  watchProperty,
+  unwatchProperty,
+  getWatches as getPropertyWatches,
+  type WatchEntrySummary,
+} from '../core/property-watcher';
 
 /**
  * Summary of a view without live DOM references
@@ -149,6 +155,28 @@ interface FUTDBG {
    * Shows timestamp, type, URLs, UT router class, and controller/viewModel counts
    */
   nav(): void;
+
+  /**
+   * Watch a property on an object for changes
+   * Logs changes to console and returns a watch ID
+   * @param instance - Object instance to watch
+   * @param propName - Property name to watch
+   * @returns Watch ID (use with unwatch to remove)
+   */
+  watch(instance: object, propName: string): string;
+
+  /**
+   * Stop watching a property
+   * @param watchId - Watch ID returned from watch()
+   * @returns true if watch was removed, false if not found
+   */
+  unwatch(watchId: string): boolean;
+
+  /**
+   * Get all active property watches
+   * @returns Array of watch summaries
+   */
+  watches(): WatchEntrySummary[];
 }
 
 /**
@@ -274,6 +302,9 @@ function createFUTDBG(): FUTDBG {
 - FUTDBG.features() - Get all features and their current states
 - FUTDBG.perf(className?) - Show performance stats (top 20 or filtered by className)
 - FUTDBG.nav() - Display navigation timeline (newest first, max 50)
+- FUTDBG.watch(instance, propName) - Watch a property for changes, returns watch ID
+- FUTDBG.unwatch(watchId) - Stop watching a property, returns true if removed
+- FUTDBG.watches() - Get all active property watches
 - FUTDBG.registry - Access raw registry object for power users
 - FUTDBG.help() - Show this help text
 
@@ -292,6 +323,9 @@ Examples:
   FUTDBG.perf()                       // Top 20 methods by total time
   FUTDBG.perf('UTPlayerItemView')     // All stats for classes matching 'UTPlayerItemView'
   FUTDBG.nav()                        // Show navigation events with timestamps, types, URLs
+  FUTDBG.watch(playerItem, 'rating')  // Watch playerItem.rating for changes
+  FUTDBG.unwatch('watch-1')           // Stop watching
+  FUTDBG.watches()                    // [{ id, path, strategy }, ...]
   FUTDBG.registry.classes             // Direct access to registry`;
     },
 
@@ -376,6 +410,20 @@ Examples:
           ViewModels: e.viewModelsSnapshot.length,
         })),
       );
+    },
+
+    watch(instance: object, propName: string): string {
+      return watchProperty(instance, propName, (oldVal, newVal) => {
+        console.log(`[Property Changed] ${propName}:`, oldVal, '→', newVal);
+      });
+    },
+
+    unwatch(watchId: string): boolean {
+      return unwatchProperty(watchId);
+    },
+
+    watches(): WatchEntrySummary[] {
+      return getPropertyWatches();
     },
   };
 }

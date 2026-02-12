@@ -8,6 +8,7 @@ import { initEventHooks } from './core/event-hooks';
 import { initRulesEngine } from './core/rules-engine';
 import { initPerfProfiler } from './core/perf-profiler';
 import { initNavTracker } from './core/nav-tracker';
+import { initPropertyWatcher } from './core/property-watcher';
 import { installFUTDBG } from './api/futdbg';
 import { createShadowHost } from './ui/shadow-host';
 import {
@@ -113,6 +114,7 @@ function init(): void {
   initRulesEngine(); // Conditional logging rules engine
   initPerfProfiler(); // Performance profiler
   initNavTracker(); // Navigation/routing timeline tracker
+  initPropertyWatcher(); // Property watcher for object change tracking
   installFUTDBG(); // Install window.FUTDBG console API
   setupDebugOverlay(); // UI setup
   console.log('[UTDebug] Ready. Press Ctrl+Shift+U to toggle.');
