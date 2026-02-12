@@ -1,0 +1,74 @@
+Screenshot 1: Extension loaded
+[CONSOLE] Failed to load resource: the server responded with a status of 404 ()
+[CONSOLE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+[CONSOLE] cur LoginMethod = 
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] cur LoginMethod = emailPassword
+[CONSOLE] updated to LoginMethod = emailPassword
+[CONSOLE] authentication error: 10002 with cid: 
+Screenshot 2: Content script injected
+Console logs: []
+Screenshot 3: UI toggled
+Sidebar exists: false
+Class window exists: false
+Method spy window exists: false

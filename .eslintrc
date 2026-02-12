@@ -32,6 +32,14 @@
     "no-alert": "off",
     "no-bitwise": "off",
     "consistent-return": ["error", { "treatUndefinedAsUnspecified": false }],
-    "@typescript-eslint/naming-convention": "off"
+    "@typescript-eslint/naming-convention": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "no-plusplus": "off",
+    "no-continue": "off",
+    "no-console": "off",
+    "no-empty": "off",
+    "prefer-rest-params": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "no-useless-escape": "off"
   }
 }

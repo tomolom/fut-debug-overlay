@@ -140,6 +140,7 @@ describe('summarizeArg', () => {
   it('should format objects with constructor name', () => {
     class CustomClass {
       foo = 1;
+
       bar = 2;
     }
     const instance = new CustomClass();

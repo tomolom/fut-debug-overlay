@@ -1,19 +1,19 @@
 # FUT UT View Debug Overlay
 
-A Tampermonkey userscript that provides a real-time debugging overlay for the EA FC Ultimate Team (FUT) web app. It hooks into the app's internal `UT*` class architecture to expose views, controllers, viewmodels, method calls, and DOM ownership — all from an in-browser overlay.
+Chrome extension (Manifest V3) for real-time debugging of EA FC Ultimate Team web app. It hooks into the app's internal `UT*` class architecture to expose views, controllers, viewmodels, method calls, and DOM ownership — all from an in-browser overlay.
 
 Built for developers and reverse engineers who need to understand how the FUT web app is structured at runtime.
 
-> **v0.8** — [Changelog](#changelog)
+> **v1.0.0** (Converted from v0.8 Tampermonkey script) — [Changelog](#changelog)
 
 ## Quick Start
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/) (Chrome, Firefox, Edge, Safari)
-2. **[Click here to install the userscript](https://raw.githubusercontent.com/tomolom/fut-debug-overlay/master/FUT%20UT%20View%20Debug%20Overlay%20(DOM-aware)-0.8.user.js)**
-3. Open the FUT Web App at [ea.com/ea-sports-fc/ultimate-team/web-app](https://www.ea.com/ea-sports-fc/ultimate-team/web-app)
-4. Wait for the page to fully load (the script polls for up to 60s until UT classes are detected)
-5. Press **Ctrl+Shift+U** to toggle the overlay on
-6. Open the Method Spy with **Ctrl+Shift+H** if you want to record method calls
+1. Open Chrome and navigate to `chrome://extensions`
+2. Enable **Developer mode** in the top right corner
+3. Click **Load unpacked**
+4. Select the `dist/` folder of this project
+5. Open the FUT Web App at [ea.com/ea-sports-fc/ultimate-team/web-app](https://www.ea.com/ea-sports-fc/ultimate-team/web-app)
+6. Press **Ctrl+Shift+U** to toggle the overlay on
 
 ## Features
 
@@ -75,27 +75,64 @@ These are the only keyboard shortcuts. All other interaction is via mouse (hover
 ## Installation
 
 ### Requirements
-- A userscript manager: [Tampermonkey](https://www.tampermonkey.net/) (recommended) or [Violentmonkey](https://violentmonkey.github.io/)
-- The script uses `unsafeWindow` and `GM_addStyle` grants — Greasemonkey may not be fully compatible
+- Chrome or Chromium-based browser
+- Node.js 18+ (only if building from source)
 
-### Install from GitHub (recommended)
-Click the direct install link — Tampermonkey will recognize the `.user.js` URL and prompt you:
+### Option A: Use Built Version
+1. Download the latest release
+2. Navigate to `chrome://extensions` and enable **Developer mode**
+3. Click **Load unpacked** and select the `dist/` directory
 
-**[Install FUT UT View Debug Overlay v0.8](https://raw.githubusercontent.com/tomolom/fut-debug-overlay/master/FUT%20UT%20View%20Debug%20Overlay%20(DOM-aware)-0.8.user.js)**
+### Option B: Build from Source
+1. Clone the repository: `git clone https://github.com/tomolom/fut-debug-overlay.git`
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Load the `dist/` folder as an unpacked extension in Chrome
 
-### Manual Install
-1. Open Tampermonkey dashboard
-2. Click the **+** tab to create a new script
-3. Delete the template and paste the entire contents of [`FUT UT View Debug Overlay (DOM-aware)-0.8.user.js`](FUT%20UT%20View%20Debug%20Overlay%20(DOM-aware)-0.8.user.js)
-4. Save (Ctrl+S)
+## Development
 
-### Updating
-Re-click the install link above to update. Tampermonkey will detect the existing script and offer to overwrite it.
+### Project Structure
+```
+src/
+├── types/
+│   └── index.ts          # 7 interfaces + global Window/Element extensions
+├── core/
+│   ├── registry.ts       # Typed collections (views, controllers, viewModels, classes, etc.)
+│   ├── state.ts           # Shared state (debug flags, UI element references)
+│   ├── helpers.ts         # 13 utility functions
+│   ├── ut-class-hooks.ts  # UT class discovery and prototype wrapping
+│   ├── dom-hooks.ts       # DOM insertion patching + MutationObserver
+│   └── event-hooks.ts     # EventTarget.addEventListener tracking
+├── ui/
+│   ├── overlay.ts         # Tooltip, highlight box, badge, toggleDebug
+│   ├── sidebar.ts         # Views/Controllers/ViewModels panel
+│   ├── class-inspector.ts # Class browser with method listing
+│   ├── method-spy.ts      # Real-time method call logger
+│   └── drag.ts            # Draggable window support
+├── styles/
+│   └── overlay.css        # 287 lines, 36 CSS classes
+└── index.ts               # Entry point with polling init + keyboard shortcuts
+
+extension/
+├── manifest.json          # Manifest V3 configuration
+└── contentscript.js       # Injects bundle + CSS into page context (MAIN world)
+```
+
+### Build Commands
+- `npm run build` — Production build via Vite
+- `npm run dev` — Watch mode for development
+- `npm run typecheck` — TypeScript strict mode check
+- `npm run lint` — ESLint with airbnb-typescript rules
+
+### Architecture Overview
+The project uses a Vite IIFE build. The `contentscript.js` runs at `document_idle` in the **ISOLATED** world and injects the following into the **MAIN** world:
+1. A `<script>` tag pointing to `js/main.js` (has access to page's window object and `UT*` globals)
+2. A `<link>` tag pointing to `fut-debug-overlay.css`
 
 ## How It Works
 
 ### Initialization
-The script runs at `document-idle` and then **polls every 500ms** for up to 60 seconds, waiting for `UTRootView` or `UTPlayerItemView` to exist on the `window` object. Once detected, full initialization proceeds. If the timeout is reached without finding UT classes, the script **falls back to DOM hook mode only** — hover inspection and DOM tracking will work, but class/controller/viewmodel discovery and method spying will not.
+The content script runs at `document_idle` and then **polls every 500ms** for up to 60 seconds, waiting for `UTRootView` or `UTPlayerItemView` to exist on the `window` object. Once detected, full initialization proceeds. If the timeout is reached without finding UT classes, the extension **falls back to DOM hook mode only** — hover inspection and DOM tracking will work, but class/controller/viewmodel discovery and method spying will not.
 
 ### Hook Architecture
 1. **DOM hooks** — patches `Node.prototype.appendChild`/`insertBefore`/`replaceChild` and sets up a `MutationObserver` to capture stack traces on every DOM insertion, tagging elements with `data-ut-created-by`
@@ -117,17 +154,15 @@ Every 1 second, the sidebar scans all tracked view records and removes entries w
 | **Intended for** | EA FC Ultimate Team Web App |
 | **Tested URL** | `https://www.ea.com/ea-sports-fc/ultimate-team/web-app` |
 | **Match patterns** | `https://www.ea.com/*`, `https://www.easports.com/*` |
-| **Runs at** | `document-idle` |
-| **Requires** | Tampermonkey or Violentmonkey (`unsafeWindow` + `GM_addStyle`) |
-
-> **Note**: The `@match` patterns are broad (`ea.com/*`). The script is harmless on non-FUT pages — it will poll for 60s, find no UT classes, and fall back to a lightweight DOM hook. But if you prefer, you can narrow the `@match` in Tampermonkey's script editor to target only the web app URL.
+| **Runs at** | `document_idle` |
+| **Platform** | Chrome/Chromium (Manifest V3) |
 
 ## Known Limitations
 
-- **Pre-existing DOM elements**: Elements inserted before the script's hooks activate (during initial page load before `document-idle`) may not have `createdBy` attribution
-- **Event listener gaps**: Only captures `addEventListener` calls made *after* the hook is installed. Cannot detect inline `onclick=` handlers, listeners attached before the script runs, or `removeEventListener` calls
+- **Pre-existing DOM elements**: Elements inserted before the extension's hooks activate (during initial page load before `document_idle`) may not have `createdBy` attribution
+- **Event listener gaps**: Only captures `addEventListener` calls made *after* the hook is installed. Cannot detect inline `onclick=` handlers, listeners attached before the extension runs, or `removeEventListener` calls
 - **Stack trace attribution is best-effort**: If a UT class calls through several layers of indirection, the first `UT*` name found in the stack trace is used — this may not always be the most semantically meaningful class
-- **EA updates can break this**: The script depends on the FUT web app exposing `UT*` globals on `window`. If EA changes their bundling, naming, or architecture, features may stop working
+- **EA updates can break this**: The extension depends on the FUT web app exposing `UT*` globals on `window`. If EA changes their bundling, naming, or architecture, features may stop working
 - **No persistence**: All data is in-memory and lost on page refresh
 
 ## Performance Notes
@@ -141,27 +176,28 @@ Every 1 second, the sidebar scans all tracked view records and removes entries w
 
 ## Privacy & Safety
 
-- **All data stays local** — nothing is sent to any server. The script operates entirely within your browser tab
+- **All data stays local** — nothing is sent to any server. The extension operates entirely within your browser
 - **Be careful sharing screenshots** — the Method Spy may display method arguments that contain session tokens, player IDs, or other sensitive data
 - **Not affiliated with EA** — this is an independent debugging tool. It is not endorsed by, sponsored by, or associated with Electronic Arts in any way
-- **Use at your own risk** — this script hooks into the FUT web app's internals in ways that may violate EA's Terms of Service. The author is not responsible for any consequences of its use
+- **Use at your own risk** — this extension hooks into the FUT web app's internals in ways that may violate EA's Terms of Service. The author is not responsible for any consequences of its use
 - **For educational and debugging purposes only**
 
 ## Troubleshooting
 
 | Problem | Cause | Fix |
 |---|---|---|
-| Nothing happens when I press Ctrl+Shift+U | Script hasn't loaded or UT classes not found yet | Open browser console (F12) and look for `[UTDebug]` messages. Wait for "Ready" log |
+| Nothing happens when I press Ctrl+Shift+U | Extension hasn't loaded or UT classes not found yet | Open browser console (F12) and look for `[UTDebug]` messages. Wait for "Ready" log |
 | "Timed out waiting for UT classes" in console | Page loaded but no `UT*` globals found on `window` | Make sure you're on the FUT Web App, not a different EA page. Try refreshing |
 | Method Spy shows no calls | Method Spy window is closed | Open it with Ctrl+Shift+H — calls are only recorded while the window is visible |
 | Sidebar entries keep disappearing | View pruning removes elements no longer in DOM | This is expected. Elements that are removed/hidden are pruned every second |
 | Page feels slow with overlay on | DOM patching + method wrappers add overhead | Close Method Spy and Class Inspector. If still slow, toggle overlay off (Ctrl+Shift+U) |
-| Script stopped working after EA update | EA changed class names or architecture | Check console for errors. The script depends on `UT*` globals existing on `window` |
+| Extension stopped working after EA update | EA changed class names or architecture | Check console for errors. The extension depends on `UT*` globals existing on `window` |
+| Extension shows errors in chrome://extensions | Build issue or manifest error | Run `npm run build` and reload extension |
 
 ## Contributing
 
 Bug reports and pull requests are welcome. When reporting issues, please include:
-- Browser and Tampermonkey version
+- Chrome version and extension version
 - The exact URL you were on
 - Whether `[UTDebug] Ready` appeared in the console
 - Any console errors
@@ -169,7 +205,14 @@ Bug reports and pull requests are welcome. When reporting issues, please include
 
 ## Changelog
 
-### v0.8 (Current)
+### v1.0.0
+- Converted from Tampermonkey userscript to Manifest V3 Chrome extension
+- Full TypeScript modularization (~15 modules)
+- Vite build pipeline with IIFE output
+- Extracted CSS to standalone stylesheet
+- Zero runtime dependencies
+
+### v0.8
 - DOM-aware view inspection with `createdBy` attribution
 - Sidebar panel with Views/Nodes, Controllers, ViewModels sections
 - Class Inspector with prototype and static method browsing
@@ -183,3 +226,4 @@ Bug reports and pull requests are welcome. When reporting issues, please include
 ## License
 
 [MIT](LICENSE)
+

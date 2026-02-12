@@ -4,8 +4,11 @@
  */
 export class RingBuffer<T> {
   private buffer: T[];
+
   private head: number = 0; // Index where next item will be written
+
   private size: number = 0; // Current number of items
+
   private readonly capacity: number;
 
   constructor(capacity: number) {
