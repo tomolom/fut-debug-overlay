@@ -16,15 +16,80 @@ import {
   incrementMethodSpyNextId,
   setMethodSpyNeedsRefresh,
 } from './state';
+import { dispatcher } from './hook-dispatcher';
+import { originals } from './originals';
 
 const w = window as any;
 const MAX_CONTROLLERS = 1000;
 const MAX_VIEW_MODELS = 1000;
 
+interface MethodCallDispatchMeta {
+  className: string;
+  methodName: string;
+  isStatic: boolean;
+  threw: boolean;
+  errorObj: unknown;
+}
+
+let methodCallDispatcherBound = false;
+
+function dispatchMethodCall(
+  className: string,
+  methodName: string,
+  isStatic: boolean,
+  argsLike: IArguments,
+  resultValue: any,
+  threw: boolean,
+  errorObj: any,
+): void {
+  try {
+    const meta: MethodCallDispatchMeta = {
+      className,
+      methodName,
+      isStatic,
+      threw,
+      errorObj,
+    };
+
+    dispatcher.emit('method:call', {
+      source: `${className}.${methodName}`,
+      node: meta,
+      args: Array.from(argsLike),
+      originalResult: resultValue,
+    });
+  } catch {}
+}
+
+function ensureMethodCallDispatcherBinding(): void {
+  if (methodCallDispatcherBound) return;
+
+  dispatcher.on('method:call', (payload) => {
+    const meta = payload.node as MethodCallDispatchMeta;
+    if (!meta || !meta.className || !meta.methodName) return;
+
+    recordMethodCall(
+      meta.className,
+      meta.methodName,
+      !!meta.isStatic,
+      payload.args as unknown as IArguments,
+      payload.originalResult,
+      !!meta.threw,
+      meta.errorObj,
+    );
+  });
+
+  methodCallDispatcherBound = true;
+}
+
 export function wrapCtorForDebug(name: string): void {
-  const Original = w[name];
-  if (typeof Original !== 'function') return;
-  if (Original.__utCtorWrapped) return;
+  const currentCtor = w[name];
+  if (typeof currentCtor !== 'function') return;
+  if (currentCtor.__utCtorWrapped) return;
+
+  const ctorKey = `window.${name}`;
+  const ctorToStore = currentCtor.__utOriginalCtor || currentCtor;
+  originals.store(ctorKey, ctorToStore);
+  const Original = originals.get<any>(ctorKey) || currentCtor;
 
   function WrappedCtor(this: any) {
     const instance = Original.apply(this, arguments) || this;
@@ -47,6 +112,8 @@ export function wrapCtorForDebug(name: string): void {
 
   WrappedCtor.prototype = Original.prototype;
   Object.setPrototypeOf(WrappedCtor, Original);
+  WrappedCtor.__utCtorWrapped = true;
+  WrappedCtor.__utOriginalCtor = Original;
   w[name] = WrappedCtor;
   Original.__utCtorWrapped = true;
 }
@@ -59,18 +126,31 @@ export function hookUTClass(name: string): boolean {
   let hooked = false;
 
   if (typeof Ctor.prototype.rootElement === 'function') {
-    const origRoot = Ctor.prototype.rootElement;
-    Ctor.prototype.rootElement = function (this: any) {
+    const rootKey = `${name}.prototype.rootElement`;
+    const currentRoot = Ctor.prototype.rootElement;
+    const rootToStore = currentRoot.__utOriginalMethod || currentRoot;
+    originals.store(rootKey, rootToStore);
+    const origRoot = originals.get<any>(rootKey) || currentRoot;
+
+    const wrappedRoot = function (this: any) {
       const el = origRoot.apply(this, arguments);
       handleElementForClass(el, name);
       return el;
     };
+    wrappedRoot.__utDebugHooked = true;
+    wrappedRoot.__utOriginalMethod = origRoot;
+    Ctor.prototype.rootElement = wrappedRoot;
     hooked = true;
   }
 
   if (typeof Ctor.prototype.renderItem === 'function') {
-    const origRenderItem = Ctor.prototype.renderItem;
-    Ctor.prototype.renderItem = function (this: any, item: any) {
+    const renderKey = `${name}.prototype.renderItem`;
+    const currentRender = Ctor.prototype.renderItem;
+    const renderToStore = currentRender.__utOriginalMethod || currentRender;
+    originals.store(renderKey, renderToStore);
+    const origRenderItem = originals.get<any>(renderKey) || currentRender;
+
+    const wrappedRenderItem = function (this: any, item: any) {
       const result = origRenderItem.apply(this, arguments);
       const el =
         this.__root ||
@@ -82,6 +162,9 @@ export function hookUTClass(name: string): boolean {
       }
       return result;
     };
+    wrappedRenderItem.__utDebugHooked = true;
+    wrappedRenderItem.__utOriginalMethod = origRenderItem;
+    Ctor.prototype.renderItem = wrappedRenderItem;
     hooked = true;
   }
 
@@ -178,6 +261,8 @@ export function registerClassInfo(name: string): void {
   const Ctor = w[name];
   if (typeof Ctor !== 'function') return;
 
+  ensureMethodCallDispatcherBinding();
+
   const protoMethods: string[] = [];
   const staticMethods: string[] = [];
 
@@ -199,27 +284,34 @@ export function registerClassInfo(name: string): void {
 
       // wrap for spying (only once)
       if (!original.__utSpyWrapped) {
+        const protoKey = `${name}.prototype.${k}`;
+        const originalMethod = original.__utOriginalMethod || original;
+        originals.store(protoKey, originalMethod);
+        const storedOriginal = originals.get<any>(protoKey) || originalMethod;
+
         const wrapped = function (this: any) {
-          if (!isMethodSpyVisible()) return original.apply(this, arguments);
+          if (!isMethodSpyVisible())
+            return storedOriginal.apply(this, arguments);
 
           let result;
 
           try {
-            result = original.apply(this, arguments);
+            result = storedOriginal.apply(this, arguments);
           } catch (e) {
             try {
-              recordMethodCall(name, k, false, arguments, undefined, true, e);
+              dispatchMethodCall(name, k, false, arguments, undefined, true, e);
             } catch {}
             throw e;
           }
 
           try {
-            recordMethodCall(name, k, false, arguments, result, false, null);
+            dispatchMethodCall(name, k, false, arguments, result, false, null);
           } catch {}
 
           return result;
         };
         wrapped.__utSpyWrapped = true;
+        wrapped.__utOriginalMethod = storedOriginal;
         proto[k] = wrapped;
       }
     }
@@ -247,27 +339,34 @@ export function registerClassInfo(name: string): void {
       staticMethods.push(getFunctionSignature(k, original));
 
       if (!original.__utSpyWrapped) {
+        const staticKey = `${name}.static.${k}`;
+        const originalMethod = original.__utOriginalMethod || original;
+        originals.store(staticKey, originalMethod);
+        const storedOriginal = originals.get<any>(staticKey) || originalMethod;
+
         const wrappedStatic = function (this: any) {
-          if (!isMethodSpyVisible()) return original.apply(this, arguments);
+          if (!isMethodSpyVisible())
+            return storedOriginal.apply(this, arguments);
 
           let result;
 
           try {
-            result = original.apply(this, arguments);
+            result = storedOriginal.apply(this, arguments);
           } catch (e) {
             try {
-              recordMethodCall(name, k, true, arguments, undefined, true, e);
+              dispatchMethodCall(name, k, true, arguments, undefined, true, e);
             } catch {}
             throw e;
           }
 
           try {
-            recordMethodCall(name, k, true, arguments, result, false, null);
+            dispatchMethodCall(name, k, true, arguments, result, false, null);
           } catch {}
 
           return result;
         };
         wrappedStatic.__utSpyWrapped = true;
+        wrappedStatic.__utOriginalMethod = storedOriginal;
         Ctor[k] = wrappedStatic;
       }
     }
