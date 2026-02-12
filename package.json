@@ -1,14 +1,14 @@
 {
   "name": "fut-debug-overlay",
   "version": "1.0.0",
-  "description": "A Tampermonkey userscript that provides a real-time debugging overlay for the EA FC Ultimate Team (FUT) web app. It hooks into the app's internal `UT*` class architecture to expose views, controllers, viewmodels, method calls, and DOM ownership — all from an in-browser overlay.",
-  "main": "FUT UT View Debug Overlay (DOM-aware)-0.8.user.js",
+  "description": "Chrome extension (Manifest V3) providing a real-time debugging overlay for the EA FC Ultimate Team web app",
   "scripts": {
     "build": "vite build",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -30,9 +30,12 @@
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
+    "jsdom": "^28.0.0",
+    "playwright": "^1.58.2",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vite-plugin-static-copy": "^3.2.0"
+    "vite-plugin-static-copy": "^3.2.0",
+    "vitest": "^4.0.18"
   }
 }
