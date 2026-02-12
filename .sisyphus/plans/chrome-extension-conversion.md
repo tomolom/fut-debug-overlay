@@ -166,7 +166,7 @@ Wave 5 (After Task 6):
 
 ## TODOs
 
-- [ ] 1. Project Scaffolding & Build Configuration
+- [x] 1. Project Scaffolding & Build Configuration
 
   **What to do**:
   - Initialize npm project: `npm init -y`
@@ -375,7 +375,7 @@ Wave 5 (After Task 6):
 
 ---
 
-- [ ] 2. Types & Registry Module
+- [x] 2. Types & Registry Module
 
   **What to do**:
   - Create `src/types/index.ts` — TypeScript interfaces and types:
@@ -445,7 +445,7 @@ Wave 5 (After Task 6):
 
 ---
 
-- [ ] 3. Core Hooks (DOM, Prototype, Event Listener)
+- [x] 3. Core Hooks (DOM, Prototype, Event Listener)
 
   **What to do**:
   - Create `src/core/dom-hooks.ts` — DOM insertion tracking:
@@ -548,7 +548,7 @@ Wave 5 (After Task 6):
 
 ---
 
-- [ ] 4. UI Components
+- [x] 4. UI Components
 
   **What to do**:
   - Create `src/ui/overlay.ts` — Tooltip, highlight box, and badge:
@@ -642,7 +642,7 @@ Wave 5 (After Task 6):
 
 ---
 
-- [ ] 5. CSS Extraction
+- [x] 5. CSS Extraction
 
   **What to do**:
   - Create `src/styles/overlay.css`:
@@ -706,7 +706,7 @@ Wave 5 (After Task 6):
 
 ---
 
-- [ ] 6. Entry Point & Init Sequence
+- [x] 6. Entry Point & Init Sequence
 
   **What to do**:
   - Create `src/index.ts` — the main entry point:
@@ -804,7 +804,7 @@ Wave 5 (After Task 6):
 
 ---
 
-- [ ] 7. Build Verification & Extension Load Test
+- [x] 7. Build Verification & Extension Load Test
 
   **What to do**:
   - Run full build: `npm run build`
