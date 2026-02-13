@@ -66,6 +66,11 @@ const state = {
 let port: chrome.runtime.Port | null = null;
 const BATCH_UPDATE_MS = 500;
 let updatePending = false;
+let featureStateSynced = false;
+let featureRetryTimer: ReturnType<typeof setInterval> | null = null;
+const FEATURE_RETRY_MS = 800;
+const FEATURE_RETRY_MAX = 15; // give up after ~12s
+let featureRetryCount = 0;
 
 // Read tabId from URL query param (passed by devtools.ts)
 const urlParams = new URLSearchParams(window.location.search);
@@ -81,23 +86,9 @@ const tabContents = {
   snapshots: document.getElementById('snapshots-content')!,
 };
 
-// --- Default feature states (shown immediately before bridge responds) ---
-const DEFAULT_FEATURES: Record<string, boolean> = {
-  overlay: true,
-  sidebar: true,
-  classinspector: true,
-  methodspy: true,
-  network: false,
-  conditionallog: false,
-  perfprofiler: false,
-  navtimeline: false,
-  propertywatcher: false,
-};
-
 // --- Initialization ---
 function init() {
-  // Render toggles immediately with defaults so they're visible before bridge connects
-  state.features = { ...DEFAULT_FEATURES };
+  // Render toggles in "syncing" state — all OFF until real FEATURE_STATES arrives
   renderToggles();
 
   setupTabs();
@@ -129,6 +120,41 @@ function showDisconnected(reason: string) {
   body.prepend(banner);
 }
 
+function requestFeatureStates() {
+  if (featureStateSynced || !port) return;
+
+  port.postMessage({ type: 'GET_FEATURE_STATES' });
+  featureRetryCount++;
+
+  if (featureRetryCount >= FEATURE_RETRY_MAX) {
+    // Give up retrying — show toggles as all-off so user can still click them
+    featureStateSynced = true;
+    renderToggles();
+    return;
+  }
+
+  if (featureRetryTimer !== null) clearInterval(featureRetryTimer);
+  featureRetryTimer = setInterval(() => {
+    if (featureStateSynced || !port) {
+      if (featureRetryTimer !== null) {
+        clearInterval(featureRetryTimer);
+        featureRetryTimer = null;
+      }
+      return;
+    }
+    port.postMessage({ type: 'GET_FEATURE_STATES' });
+    featureRetryCount++;
+    if (featureRetryCount >= FEATURE_RETRY_MAX) {
+      if (featureRetryTimer !== null) {
+        clearInterval(featureRetryTimer);
+        featureRetryTimer = null;
+      }
+      featureStateSynced = true;
+      renderToggles();
+    }
+  }, FEATURE_RETRY_MS);
+}
+
 function connectToBackground() {
   if (contextInvalidated || isContextInvalid()) {
     contextInvalidated = true;
@@ -157,9 +183,9 @@ function connectToBackground() {
       }
     });
 
-    // Request initial state
-    port.postMessage({ type: 'GET_INITIAL_STATE' });
-    port.postMessage({ type: 'GET_FEATURE_STATES' });
+    // Request feature states with retry until response arrives
+    featureRetryCount = 0;
+    requestFeatureStates();
   } catch (e) {
     if (String(e).includes('Extension context invalidated')) {
       contextInvalidated = true;
@@ -217,6 +243,11 @@ function handleMessage(msg: any) {
     case 'FEATURE_STATES':
       if (msg.payload && typeof msg.payload === 'object') {
         state.features = msg.payload;
+        featureStateSynced = true;
+        if (featureRetryTimer !== null) {
+          clearInterval(featureRetryTimer);
+          featureRetryTimer = null;
+        }
         renderToggles();
       }
       break;
@@ -293,7 +324,7 @@ function setupFilters() {
     renderPerformance();
   });
   document.getElementById('perf-refresh')?.addEventListener('click', () => {
-    port?.postMessage({ type: 'GET_PERF_STATS' });
+    port?.postMessage({ type: 'GET_PERF_DATA' });
   });
 }
 
@@ -323,7 +354,7 @@ function setupSorting() {
 
 function setupActions() {
   document.getElementById('snapshot-take')?.addEventListener('click', () => {
-    port?.postMessage({ type: 'TAKE_SNAPSHOT' });
+    port?.postMessage({ type: 'SNAPSHOT_REQUEST' });
   });
 
   document.getElementById('snapshot-diff')?.addEventListener('click', () => {
@@ -356,31 +387,36 @@ function renderActiveTab() {
 }
 
 // --- Rendering: Toggles ---
+const TOGGLE_FEATURES = [
+  { key: 'overlay', label: 'Overlay' },
+  { key: 'sidebar', label: 'Sidebar' },
+  { key: 'classinspector', label: 'Class Insp' },
+  { key: 'methodspy', label: 'Method Spy' },
+  { key: 'network', label: 'Network' },
+  { key: 'conditionallog', label: 'Cond Log' },
+  { key: 'perfprofiler', label: 'Perf' },
+  { key: 'navtimeline', label: 'Nav' },
+  { key: 'propertywatcher', label: 'Prop Watch' },
+];
+
 function renderToggles() {
   const container = document.getElementById('toggles-bar')!;
-  const features = [
-    { key: 'overlay', label: 'Overlay' },
-    { key: 'sidebar', label: 'Sidebar' },
-    { key: 'classinspector', label: 'Class Insp' },
-    { key: 'methodspy', label: 'Method Spy' },
-    { key: 'network', label: 'Network' },
-    { key: 'conditionallog', label: 'Cond Log' },
-    { key: 'perfprofiler', label: 'Perf' },
-    { key: 'navtimeline', label: 'Nav' },
-    { key: 'propertywatcher', label: 'Prop Watch' },
-  ];
 
-  container.innerHTML = features
-    .map((f) => {
-      const active = state.features[f.key];
-      return `
+  if (!featureStateSynced) {
+    container.innerHTML =
+      '<span class="text-dim" style="padding:4px 8px;font-size:10px">Syncing features\u2026</span>';
+    return;
+  }
+
+  container.innerHTML = TOGGLE_FEATURES.map((f) => {
+    const active = state.features[f.key];
+    return `
       <div class="toggle-item ${active ? 'active' : ''}" data-key="${f.key}">
         <div class="toggle-switch"></div>
         <span>${f.label}</span>
       </div>
     `;
-    })
-    .join('');
+  }).join('');
 
   container.querySelectorAll('.toggle-item').forEach((el) => {
     el.addEventListener('click', (e) => {

@@ -30,6 +30,9 @@ import {
 } from './ui/method-spy';
 import { isMethodSpyVisible } from './core/state';
 import { toggleFeature, getFeatures, FeatureKey } from './core/feature-toggles';
+import { getStats } from './core/perf-profiler';
+import { getNavEvents } from './core/nav-tracker';
+import { takeSnapshot } from './core/snapshot';
 
 /**
  * Sets up the debug overlay UI and event listeners
@@ -105,6 +108,44 @@ function setupDebugOverlay(): void {
   }, 1000);
 }
 
+// Register DevTools control-plane handlers EARLY (before polling/init)
+// so the panel can sync feature state even while waiting for UT classes.
+onMessage(MessageType.TOGGLE_FEATURE, (payload: any) => {
+  if (payload && payload.feature) {
+    toggleFeature(payload.feature as FeatureKey);
+    sendMessage(MessageType.FEATURE_STATES, getFeatures());
+  }
+});
+
+onMessage(MessageType.GET_FEATURE_STATES, () => {
+  sendMessage(MessageType.FEATURE_STATES, getFeatures());
+});
+
+onMessage(MessageType.GET_PERF_DATA, () => {
+  const snapshot = Array.from(getStats().values()).map((s) => ({
+    className: s.className,
+    methodName: s.methodName,
+    callCount: s.callCount,
+    totalMs: s.totalMs,
+    avgMs: s.avgMs,
+    minMs: s.minMs,
+    maxMs: s.maxMs,
+    p95Ms: s.p95Ms,
+  }));
+  sendMessage(MessageType.PERF_DATA, snapshot);
+});
+
+onMessage(MessageType.GET_NAV_EVENTS, () => {
+  const events = getNavEvents(500);
+  // Send each event individually so panel's NAV_EVENT handler can process them
+  events.forEach((evt) => sendMessage(MessageType.NAV_EVENT, evt));
+});
+
+onMessage(MessageType.SNAPSHOT_REQUEST, () => {
+  const snap = takeSnapshot();
+  sendMessage(MessageType.SNAPSHOT_DATA, snap);
+});
+
 /**
  * Main initialization function
  */
@@ -118,18 +159,6 @@ function init(): void {
   initPropertyWatcher(); // Property watcher for object change tracking
   initNetworkInterceptor(); // Network/API monitor (fetch + XHR)
   installFUTDBG(); // Install window.FUTDBG console API
-
-  // Setup DevTools message listeners
-  onMessage(MessageType.TOGGLE_FEATURE, (payload: any) => {
-    if (payload && payload.feature) {
-      toggleFeature(payload.feature as FeatureKey);
-      sendMessage(MessageType.FEATURE_STATES, getFeatures());
-    }
-  });
-
-  onMessage(MessageType.GET_FEATURE_STATES, () => {
-    sendMessage(MessageType.FEATURE_STATES, getFeatures());
-  });
 
   setupDebugOverlay(); // UI setup
   console.log('[UTDebug] Ready. Press Ctrl+Shift+U to toggle.');

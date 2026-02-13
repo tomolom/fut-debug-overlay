@@ -25,6 +25,16 @@ const w = window as any;
 const MAX_CONTROLLERS = 1000;
 const MAX_VIEW_MODELS = 1000;
 
+/** Check if any feature consuming method:call events is active */
+function needsMethodDispatch(): boolean {
+  return (
+    isMethodSpyVisible() ||
+    isFeatureEnabled('methodspy') ||
+    isFeatureEnabled('perfprofiler') ||
+    isFeatureEnabled('conditionallog')
+  );
+}
+
 interface MethodCallDispatchMeta {
   className: string;
   methodName: string;
@@ -234,10 +244,16 @@ export function recordMethodCall(
   threw: boolean,
   errorObj: any,
 ): void {
-  // Gate: need either in-page spy visible OR methodspy feature enabled (for DevTools panel)
+  // Gate: need any consumer of method:call events to be active
   const spyVisible = isMethodSpyVisible();
   const featureOn = isFeatureEnabled('methodspy');
-  if (!spyVisible && !featureOn) return;
+  if (
+    !spyVisible &&
+    !featureOn &&
+    !isFeatureEnabled('perfprofiler') &&
+    !isFeatureEnabled('conditionallog')
+  )
+    return;
 
   const ts = Date.now();
 
@@ -320,7 +336,7 @@ export function registerClassInfo(name: string): void {
         const storedOriginal = originals.get<any>(protoKey) || originalMethod;
 
         const wrapped = function (this: any) {
-          if (!isMethodSpyVisible() && !isFeatureEnabled('methodspy'))
+          if (!needsMethodDispatch())
             return storedOriginal.apply(this, arguments);
 
           const startTime = performance.now();
@@ -396,7 +412,7 @@ export function registerClassInfo(name: string): void {
         const storedOriginal = originals.get<any>(staticKey) || originalMethod;
 
         const wrappedStatic = function (this: any) {
-          if (!isMethodSpyVisible() && !isFeatureEnabled('methodspy'))
+          if (!needsMethodDispatch())
             return storedOriginal.apply(this, arguments);
 
           const startTime = performance.now();
